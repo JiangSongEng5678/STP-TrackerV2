@@ -522,7 +522,16 @@
                 </div>
                 <div id="settings" class="tab-content">
                     <h2 id="settingsTitle"></h2> 
-                    <div class="settings-card" style="border-left-color: var(--primary-color);">
+                    
+                    <div class="settings-card" style="border-left-color: var(--warning-color);">
+                         <h3>Account</h3>
+                         <p><strong>Logged in as:</strong> <span id="user-email"></span></p>
+                         <div class="controls">
+                             <button id="logout-btn" class="btn-secondary">Logout</button>
+                         </div>
+                    </div>
+
+                    <div class="settings-card" style="border-left-color: var(--primary-color); margin-top: 20px;">
                         <h3 id="backupSyncTitle"></h3>
                         <p id="backupSyncDesc"></p>
                         <div class="controls">
@@ -532,11 +541,13 @@
                             </label>
                         </div>
                     </div>
+
                     <div class="settings-card" style="border-left-color: var(--info-color); margin-top: 20px;">
                         <h3>Data Status</h3>
                         <p><strong>Last Synced/Imported:</strong> <span id="last-sync-time">Never</span></p>
                         <p><strong>Total Prospects:</strong> <span id="total-prospects">0</span></p>
                     </div>
+
                     <div class="settings-card" style="border-left-color: var(--danger-color); margin-top: 20px;">
                          <h3 id="dangerZoneTitle"></h3>
                          <p id="dangerZoneDesc"></p>
@@ -629,9 +640,6 @@
         </div>
     </div>
     
-    <button id="logout-btn" class="btn-danger" style="position: fixed; top: 20px; right: 20px; display: none;">Logout</button>
-
-
     <div id="prospect-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header"> <h2 id="modal-title"></h2> <span class="close-button" id="close-modal">&times;</span> </div>
@@ -897,7 +905,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let analyticsView = 'user'; 
     let lastSyncTimestamp = null;
 
-    // --- START: New Event Listeners & Logic for Login Page ---
+    // --- START: NEW EVENT LISTENERS & LOGIC FOR LOGIN PAGE ---
     const forgotPasswordModal = document.getElementById('forgot-password-modal');
     
     document.getElementById('forgot-password-link').addEventListener('click', (e) => {
@@ -2125,15 +2133,21 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('loading-screen').classList.add('hidden');
         }, 1500);
 
+        const userEmailEl = document.getElementById('user-email');
+
         if (user) {
             authContainer.style.display = 'none';
             mainApp.style.display = 'flex';
-            logoutBtn.style.display = 'block';
+            if (userEmailEl) {
+                userEmailEl.textContent = user.email;
+            }
             startApp();
         } else {
             authContainer.style.display = 'flex';
             mainApp.style.display = 'none';
-            logoutBtn.style.display = 'none';
+            if (userEmailEl) {
+                userEmailEl.textContent = '';
+            }
             updateAuthView(); // Initialize the auth form view
         }
     }
