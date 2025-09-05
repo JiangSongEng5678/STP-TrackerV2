@@ -1426,7 +1426,8 @@ document.addEventListener('DOMContentLoaded', () => {
             upcoming.forEach(item => { 
                 const card = document.createElement('div'); 
                 card.className = 'appointment-card'; 
-                card.innerHTML = `<h3>${item.p.name}</h3><p><strong>${item.type}:</strong> ${formatDate(item.date)}</p>`; 
+                let downlineHtml = item.p.owner_type === 'downline' ? `<div class="downline-info">👤 ${item.p.downline_name}</div>` : '';
+                card.innerHTML = `<h3>${item.p.name}</h3><p><strong>${item.type}:</strong> ${formatDate(item.date)}</p>${downlineHtml}`; 
                 appointmentsGrid.appendChild(card); 
             });
         }
@@ -1438,7 +1439,8 @@ document.addEventListener('DOMContentLoaded', () => {
             followUps.forEach(p => {
                 const card = document.createElement('div'); 
                 card.className = 'reminder-card';
-                card.innerHTML = `<h3>${p.name}</h3><p><strong>${translations[currentLang].status}:</strong> ${translations[currentLang][p.status]}</p><p><strong>${translations[currentLang].kitCounter}:</strong> ${p.kit_counter || 0}</p>
+                let downlineHtml = p.owner_type === 'downline' ? `<div class="downline-info">👤 ${p.downline_name}</div>` : '';
+                card.innerHTML = `<h3>${p.name}</h3><p><strong>${translations[currentLang].status}:</strong> ${translations[currentLang][p.status]}</p><p><strong>${translations[currentLang].kitCounter}:</strong> ${p.kit_counter || 0}</p>${downlineHtml}
                 <div class="prospect-actions"><button class="btn-primary" data-id="${p.id}" data-action="${p.status === 'KIT_STP' ? 'schedule_gms' : 'joined'}">${p.status === 'KIT_STP' ? translations[currentLang].actionScheduleGMS : translations[currentLang].actionJoined}</button>
                 <button class="btn-warning" data-id="${p.id}" data-action="follow_up">${translations[currentLang].actionFollowUp}</button></div>`;
                 followUpsGrid.appendChild(card);
