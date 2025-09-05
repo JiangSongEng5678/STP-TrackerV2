@@ -6,6 +6,7 @@
     <title>安利对象跟进系统 (Amway Prospect Tracker)</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/style.css">
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/zh.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <style>
         :root {
@@ -947,7 +948,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     function setLanguage(lang) {
-        currentLang = lang; document.documentElement.lang = lang; const t = translations[lang];
+        currentLang = lang; 
+        document.documentElement.lang = lang; 
+        localStorage.setItem('preferredLanguage', lang); // Save preference
+        const t = translations[lang];
+
+        // Set locale for flatpickr instances
+        const locale = lang === 'zh-CN' ? 'zh' : 'default';
+        stpPicker.set('locale', locale);
+        gmsPicker.set('locale', locale);
+        analyticsPicker.set('locale', locale);
+
         const elements = {
             appTitle: t.appTitle, 'add-prospect-btn': t.addProspectBtn, 'lang-toggle': lang === 'zh-CN' ? 'English' : '中文', tabDashboard: t.tabDashboard, tabCalendar: t.tabCalendar,
             tabAllProspects: t.tabAllProspects, tabAnalytics: t.tabAnalytics, tabSettings: t.tabSettings, tabGuide: t.tabGuide,
@@ -1168,8 +1179,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         await supabase.from('prospects').update({ notes: updatedNotes }).eq('id', id);
                     }
                 }
-                if (originalStpTime !== stpTimeValue) {
-                    await addBackAvailabilityToDB(originalStpTime);
+                if (originalStpTime !== stpTime) {
+                    await addBackAvailabilityToDB(new Date(originalStpTime).toISOString());
                     await removeBookedSlotFromDB(stpTimeValue);
                 }
             }
@@ -2010,6 +2021,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
+        // SORTING FIX: Sort all slots before grouping
+        allAvailableSlots.sort((a, b) => a - b);
+
         let contentHTML = '';
         if (allAvailableSlots.length === 0) {
             contentHTML = `<div class="slot-time">${translations[currentLang].noAvailableSlots}</div>`;
@@ -2024,7 +2038,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             for (const day in groupedSlots) {
                 contentHTML += `<div class="slot-day-group"><h4>${day}</h4>`;
-                groupedSlots[day].sort().forEach(time => {
+                // No need to sort here anymore as the main array is sorted
+                groupedSlots[day].forEach(time => {
                     contentHTML += `<div class="slot-time">${time}</div>`;
                 });
                 contentHTML += `</div>`;
@@ -2117,7 +2132,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     async function startApp() {
-        setLanguage('zh-CN');
+        // Load language preference FIRST
+        const preferredLanguage = localStorage.getItem('preferredLanguage') || 'zh-CN';
+        setLanguage(preferredLanguage);
+
         try {
             const now = new Date();
             analyticsPicker.setDate(now, true);
