@@ -260,19 +260,28 @@
             color: #9ca3af;
             cursor: pointer;
         }
-        .login-actions {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 20px;
-        }
         .login-actions button {
+            width: 100%;
             padding: 12px 20px;
             font-size: 1.1em;
         }
+        .auth-toggle-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .auth-toggle-link:hover {
+            text-decoration: underline;
+        }
+        .auth-footer {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: var(--text-color-light);
+        }
         .forgot-password-link {
             display: block;
-            margin-top: 20px;
+            margin-top: 15px;
             color: var(--primary-color);
             text-decoration: none;
             font-size: 0.9em;
@@ -365,7 +374,6 @@
             .prospect-meta { flex-direction: column; gap: 5px; align-items: flex-start; }
             .prospect-meta .separator { display: none; }
 
-            /* ADD THIS NEW BLOCK FOR THE FIX */
             .dashboard-header {
                 flex-direction: column;      /* Stack title and buttons vertically */
                 align-items: flex-start;   /* Align them to the left */
@@ -373,14 +381,12 @@
                 margin-bottom: 20px;         /* Add space below the header to prevent overlap */
             }
 
-            /* ADD THIS FOR A MORE PROFESSIONAL BUTTON LAYOUT */
             .dashboard-header .controls {
                 display: grid;               /* Use grid for easy columns */
                 grid-template-columns: 1fr 1fr; /* Create a two-column layout for the buttons */
                 width: 100%;                 /* Make the container take full width */
             }
 
-            /* 1. Refines the Filter Controls */
             .filter-controls {
                 display: grid;
                 grid-template-columns: 1fr 1fr; /* Two equal columns */
@@ -391,7 +397,6 @@
                 grid-column: 1 / -1; /* Make search bar span both columns */
             }
 
-            /* 2. Refines the Prospect Card Header (Name and Status Badge) */
             .prospect-card .card-header h3 {
                 display: flex;
                 flex-wrap: wrap;
@@ -400,14 +405,11 @@
                 line-height: 1.4;
             }
 
-            /* 3. Refines the Action Buttons inside the card */
             .prospect-actions {
                 display: grid;
-                /* This creates a smart, auto-fitting grid for the buttons */
                 grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
             }
             .login-card { padding: 25px; }
-            .login-actions { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -423,20 +425,35 @@
             <img src="images/icon-192x192.png" alt="Logo" class="login-logo">
             <h2 id="auth-title">Welcome Back</h2>
             <p id="auth-subtitle">Login to track your prospects.</p>
+            
             <div class="auth-form-group">
                 <span class="icon">📧</span>
-                <input type="email" id="auth-email" placeholder="Email">
+                <input type="email" id="auth-email" placeholder="Email" autocomplete="email">
             </div>
             <div class="auth-form-group">
                 <span class="icon">🔒</span>
-                <input type="password" id="auth-password" placeholder="Password">
+                <input type="password" id="auth-password" placeholder="Password" autocomplete="current-password">
                 <span class="password-toggle" id="password-toggle">👁️</span>
             </div>
-            <div class="login-actions">
-                <button class="btn-primary" id="login-btn">Login</button>
-                <button class="btn-success" id="signup-btn">Sign Up</button>
+            <div class="auth-form-group" id="confirm-password-group" style="display: none;">
+                <span class="icon">🔑</span>
+                <input type="password" id="auth-confirm-password" placeholder="Confirm Password" autocomplete="new-password">
             </div>
-            <a href="#" class="forgot-password-link" id="forgot-password-link">Forgot Password?</a>
+
+            <div class="login-actions">
+                <button class="btn-primary" id="auth-action-btn">Login</button>
+            </div>
+
+            <button id="google-signin-btn" class="btn-secondary" style="width:100%; margin-top: 10px;">
+                Sign in with Google
+            </button>
+
+            <div class="auth-footer">
+                <p id="auth-toggle-text">
+                    No account? <span class="auth-toggle-link" id="toggle-to-signup">Sign up now</span>.
+                </p>
+                <a href="#" class="forgot-password-link" id="forgot-password-link">Forgot Password?</a>
+            </div>
         </div>
     </div>
     <div class="app-layout" id="main-app" style="display: none;">
@@ -718,6 +735,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentPage = 1;
     const PROSPECTS_PER_PAGE = 8;
     let trendChartInstance = null;
+    let isLoginView = true; // State for tracking login/signup view
+
     const translations = {
         'zh-CN': {
             tabCalendar: "日历", appTitle: "安利对象跟进系统💎", addProspectBtn: "➕ 添加新对象", tabDashboard: "对象跟进中心", tabAllProspects: "所有对象列表", tabAnalytics: "数据分析", tabSettings: "设置", tabGuide: "指南",
@@ -2012,48 +2031,110 @@ document.addEventListener('DOMContentLoaded', () => {
           })
           .subscribe();
     }
+    
+    // --- START: DYNAMIC AUTH UI LOGIC ---
+    function updateAuthView() {
+        const title = document.getElementById('auth-title');
+        const subtitle = document.getElementById('auth-subtitle');
+        const actionBtn = document.getElementById('auth-action-btn');
+        const confirmPassGroup = document.getElementById('confirm-password-group');
+        const toggleText = document.getElementById('auth-toggle-text');
+        const forgotPassLink = document.getElementById('forgot-password-link');
+
+        if (isLoginView) {
+            title.textContent = 'Welcome Back';
+            subtitle.textContent = 'Login to track your prospects.';
+            actionBtn.textContent = 'Login';
+            actionBtn.className = 'btn-primary';
+            confirmPassGroup.style.display = 'none';
+            toggleText.innerHTML = 'No account? <span class="auth-toggle-link" id="toggle-to-signup">Sign up now</span>.';
+            forgotPassLink.style.display = 'block';
+            document.getElementById('toggle-to-signup').addEventListener('click', () => {
+                isLoginView = false;
+                updateAuthView();
+            });
+        } else {
+            title.textContent = 'Create an Account';
+            subtitle.textContent = 'Start tracking your prospects today.';
+            actionBtn.textContent = 'Sign Up';
+            actionBtn.className = 'btn-success';
+            confirmPassGroup.style.display = 'block';
+            toggleText.innerHTML = 'Already have an account? <span class="auth-toggle-link" id="toggle-to-login">Log in</span>.';
+            forgotPassLink.style.display = 'none';
+            document.getElementById('toggle-to-login').addEventListener('click', () => {
+                isLoginView = true;
+                updateAuthView();
+            });
+        }
+    }
+    
+    document.getElementById('toggle-to-signup').addEventListener('click', () => {
+        isLoginView = false;
+        updateAuthView();
+    });
+
+    // --- END: DYNAMIC AUTH UI LOGIC ---
+
 
     // --- START: FINAL AUTH LOGIC & APP STARTUP ---
     const authContainer = document.getElementById('auth-container');
     const mainApp = document.getElementById('main-app');
     const logoutBtn = document.getElementById('logout-btn');
 
-    document.getElementById('login-btn').addEventListener('click', async () => {
-        const { error } = await supabase.auth.signInWithPassword({
-            email: document.getElementById('auth-email').value,
-            password: document.getElementById('auth-password').value,
-        });
-        if (error) alert(error.message);
-    });
-
-    document.getElementById('signup-btn').addEventListener('click', async () => {
-        const { error } = await supabase.auth.signUp({
-            email: document.getElementById('auth-email').value,
-            password: document.getElementById('auth-password').value,
-        });
-        if (error) alert(error.message);
-        else alert('Sign up successful! Please check your email to verify.');
+    document.getElementById('auth-action-btn').addEventListener('click', async () => {
+        const email = document.getElementById('auth-email').value;
+        const password = document.getElementById('auth-password').value;
+        
+        if (isLoginView) {
+            // Login Logic
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) alert(error.message);
+        } else {
+            // Sign Up Logic
+            const confirmPassword = document.getElementById('auth-confirm-password').value;
+            if (password !== confirmPassword) {
+                alert("Passwords do not match.");
+                return;
+            }
+            const { error } = await supabase.auth.signUp({ email, password });
+            if (error) {
+                alert(error.message);
+            } else {
+                alert('Sign up successful! Please check your email to verify.');
+                isLoginView = true; // Switch back to login view after successful signup
+                updateAuthView();
+            }
+        }
     });
 
     logoutBtn.addEventListener('click', async () => {
         await supabase.auth.signOut();
     });
 
+    document.getElementById('google-signin-btn').addEventListener('click', async () => {
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+        });
+        if (error) {
+            alert('Error signing in with Google: ' + error.message);
+        }
+    });
+
     async function updateUserUI(user) {
-        // Wait for 2 seconds before hiding the loading screen
         setTimeout(() => {
             document.getElementById('loading-screen').classList.add('hidden');
-        }, 1500); // 2000 milliseconds = 2 seconds
+        }, 1500);
 
         if (user) {
             authContainer.style.display = 'none';
             mainApp.style.display = 'flex';
             logoutBtn.style.display = 'block';
-            startApp(); // Start the main app functionality
+            startApp();
         } else {
             authContainer.style.display = 'flex';
             mainApp.style.display = 'none';
             logoutBtn.style.display = 'none';
+            updateAuthView(); // Initialize the auth form view
         }
     }
 
