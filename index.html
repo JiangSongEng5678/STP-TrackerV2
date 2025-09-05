@@ -645,6 +645,7 @@
             <div class="modal-header"> <h2 id="modal-title"></h2> <span class="close-button" id="close-modal">&times;</span> </div>
             <form id="prospect-form">
                 <input type="hidden" id="prospect-id">
+                 <input type="hidden" id="original-stp-time">
                 <div class="form-group">
                     <label id="owner-type-label"></label>
                     <select id="owner-type">
@@ -673,6 +674,7 @@
             <div class="modal-header"> <h2 id="action-modal-title"></h2> <span class="close-button" id="action-close-modal">&times;</span> </div>
             <form id="action-form">
                 <input type="hidden" id="action-prospect-id"> <input type="hidden" id="action-type">
+                <input type="hidden" id="original-gms-time">
                 <div class="form-group" id="gms-schedule-group" style="display:none;"> <label for="gms-datetime" id="labelGmsTime"></label> <input type="text" id="gms-datetime"> </div>
                 <div class="form-group"> <label for="action-notes" id="labelActionNotes"></label> <textarea id="action-notes" rows="4"></textarea> </div>
                 <button type="submit" class="btn-success" id="confirm-action-btn"></button>
@@ -923,9 +925,8 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Please enter your email address.');
             return;
         }
-        // Supabase v2 uses resetPasswordForEmail
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.href.split('#')[0], // Redirects back to the main page
+            redirectTo: window.location.href.split('#')[0],
         });
 
         if (error) {
@@ -1052,12 +1053,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (prospectsData) {
             prospects = prospectsData;
+        } else {
+            prospects = [];
         }
         if (availabilityData) {
             availability = availabilityData.reduce((acc, curr) => {
                 acc[curr.date] = curr.time_slots;
                 return acc;
             }, {});
+        } else {
+            availability = {};
         }
         
         populateDownlineDatalist();
@@ -1136,7 +1141,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const prospectData = {
             name: document.getElementById('name').value,
             phone: document.getElementById('phone').value,
-            age: document.getElementById('age').value,
+            age: document.getElementById('age').value || null,
             occupation: document.getElementById('occupation').value,
             tags: tags,
             stp_time: stpTime,
@@ -1146,6 +1151,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         if (id) { // Edit
+            const originalStpTime = document.getElementById('original-stp-time').value;
             const { data, error } = await supabase
                 .from('prospects')
                 .update(prospectData)
@@ -1155,26 +1161,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Error updating prospect:', error);
             } else {
                  if (newNote) {
-                    const { data: currentProspect, error: fetchError } = await supabase
-                        .from('prospects')
-                        .select('notes')
-                        .eq('id', id)
-                        .single();
-
+                    const { data: currentProspect, error: fetchError } = await supabase.from('prospects').select('notes').eq('id', id).single();
                     if (currentProspect) {
                         const updatedNotes = currentProspect.notes || [];
                         updatedNotes.push({ date: new Date().toISOString(), content: `[EDIT] ${newNote}` });
                         await supabase.from('prospects').update({ notes: updatedNotes }).eq('id', id);
                     }
                 }
+                if (originalStpTime !== stpTime) {
+                    await addBackAvailabilityToDB(originalStpTime);
+                    await removeBookedSlotFromDB(stpTime);
+                }
             }
         } else { // New
             prospectData.notes = newNote ? [{ date: new Date().toISOString(), content: newNote }] : [];
-            const { data, error } = await supabase
-                .from('prospects')
-                .insert([prospectData]);
+            prospectData.status = 'STP';
+            prospectData.kit_counter = 0;
+            const { data, error } = await supabase.from('prospects').insert([prospectData]);
             if (error) {
                 console.error('Error creating prospect:', error);
+            } else {
+                await removeBookedSlotFromDB(stpTime);
             }
         }
         
@@ -1197,7 +1204,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!p.tags) p.tags = [];
         
         const gmsTime = document.getElementById('gms-datetime').value;
-        if (action === 'schedule_gms' && isTimeSlotBooked(gmsTime, p.id)) {
+        if ((action === 'schedule_gms' || action === 'edit_gms') && isTimeSlotBooked(gmsTime, p.id)) {
             alert(translations[currentLang].errorDoubleBooking);
             return;
         }
@@ -1209,14 +1216,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!confirmAction) return;
         
-        let updateData = { notes: p.notes };
+        let updateData = { notes: p.notes, tags: p.tags };
 
         switch(action) {
             case 'schedule_gms': 
                 Object.assign(updateData, { status: 'GMS_Appointment', gms_time: gmsTime, kit_counter: 0 });
+                await removeBookedSlotFromDB(gmsTime);
                 break;
             case 'edit_gms':
+                const originalGmsTime = document.getElementById('original-gms-time').value;
                 Object.assign(updateData, { gms_time: gmsTime });
+                if(originalGmsTime !== gmsTime) {
+                    await addBackAvailabilityToDB(originalGmsTime);
+                    await removeBookedSlotFromDB(gmsTime);
+                }
                 break;
             case 'kit_stp': 
                 Object.assign(updateData, { status: 'KIT_STP', kit_counter: 1 });
@@ -1238,30 +1251,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
         }
 
-        const { data, error } = await supabase
-            .from('prospects')
-            .update(updateData)
-            .eq('id', id);
-
-        if (error) {
-            console.error('Error updating prospect status:', error);
-        }
+        const { data, error } = await supabase.from('prospects').update(updateData).eq('id', id);
+        if (error) console.error('Error updating prospect status:', error);
         
         actionModal.style.display = 'none';
     });
 
     function openActionModal(id, action) {
-        document.getElementById('action-form').reset(); gmsPicker.clear(); document.getElementById('action-prospect-id').value = id; document.getElementById('action-type').value = action; const gmsGroup = document.getElementById('gms-schedule-group'); gmsGroup.style.display = action === 'schedule_gms' || action === 'edit_gms' ? 'block' : 'none'; document.getElementById('gms-datetime').required = action === 'schedule_gms' || action === 'edit_gms'; actionModal.style.display = 'flex';
+        const p = prospects.find(prospect => prospect.id == id);
+        if(!p) return;
+        document.getElementById('action-form').reset(); 
+        gmsPicker.clear(); 
+        document.getElementById('action-prospect-id').value = id; 
+        document.getElementById('action-type').value = action; 
+        const gmsGroup = document.getElementById('gms-schedule-group'); 
+        gmsGroup.style.display = (action === 'schedule_gms' || action === 'edit_gms') ? 'block' : 'none'; 
+        document.getElementById('gms-datetime').required = (action === 'schedule_gms' || action === 'edit_gms');
+        if (action === 'edit_gms') {
+            gmsPicker.setDate(p.gms_time, true);
+            document.getElementById('original-gms-time').value = p.gms_time;
+        }
+        actionModal.style.display = 'flex';
     }
+
     function openEditModal(prospectId) {
         const p = prospects.find(p => p.id == prospectId);
         if (!p) return;
         
         document.getElementById('prospect-form').reset();
         document.getElementById('modal-title').textContent = translations[currentLang].modalTitleEdit;
-        document.getElementById('prospect-id').value = p.id; document.getElementById('name').value = p.name;
-        document.getElementById('phone').value = p.phone; document.getElementById('age').value = p.age;
-        document.getElementById('occupation').value = p.occupation; document.getElementById('tags').value = p.tags ? p.tags.join(', ') : '';
+        document.getElementById('prospect-id').value = p.id; 
+        document.getElementById('name').value = p.name;
+        document.getElementById('phone').value = p.phone; 
+        document.getElementById('age').value = p.age;
+        document.getElementById('occupation').value = p.occupation; 
+        document.getElementById('tags').value = p.tags ? p.tags.join(', ') : '';
         document.getElementById('owner-type').value = p.owner_type || 'user';
         const downlineGroup = document.getElementById('downline-name-group');
         if (p.owner_type === 'downline') {
@@ -1270,18 +1294,24 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             downlineGroup.style.display = 'none';
         }
-        stpPicker.setDate(p.stp_time, true); document.getElementById('notes').value = ''; 
+        stpPicker.setDate(p.stp_time, true); 
+        document.getElementById('original-stp-time').value = p.stp_time;
+        document.getElementById('notes').value = ''; 
         prospectModal.style.display = 'flex';
     }
+
     async function deleteProspect(prospectId) {
         if (confirm(translations[currentLang].confirmDelete)) {
-            const { error } = await supabase
-                .from('prospects')
-                .delete()
-                .eq('id', prospectId);
+            const prospectToDelete = prospects.find(p => p.id == prospectId);
+            const { error } = await supabase.from('prospects').delete().eq('id', prospectId);
 
             if (error) {
                 console.error('Error deleting prospect:', error);
+            } else {
+                if (prospectToDelete) {
+                    await addBackAvailabilityToDB(prospectToDelete.stp_time);
+                    await addBackAvailabilityToDB(prospectToDelete.gms_time);
+                }
             }
         }
     }
@@ -1310,8 +1340,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const date = new Date(dateString);
 
         if (isNaN(date.getTime())) {
-            console.error("Failed to parse date string:", dateString);
-            return "Never";
+            return "N/A";
         }
         if (currentLang === 'zh-CN') {
             const year = date.getFullYear();
@@ -1739,13 +1768,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (confirm(translations[currentLang].confirmClearData)) { 
             const { data: { user } } = await supabase.auth.getUser();
             if(!user) return;
-            const { error } = await supabase
-                .from('prospects')
-                .delete()
-                .eq('user_id', user.id);
+            const { error: prospectError } = await supabase.from('prospects').delete().eq('user_id', user.id);
+            const { error: availabilityError } = await supabase.from('availability').delete().eq('user_id', user.id);
 
-            if (error) {
-                console.error('Error clearing data:', error);
+            if (prospectError || availabilityError) {
+                console.error('Error clearing data:', prospectError, availabilityError);
             } else {
                 alert(translations[currentLang].dataCleared);
             }
@@ -1784,18 +1811,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         const { data: { user } } = await supabase.auth.getUser();
                         if(!user) return;
 
-                        // Clear existing data first
                         await supabase.from('prospects').delete().eq('user_id', user.id);
                         await supabase.from('availability').delete().eq('user_id', user.id);
 
-                        // Add user_id to imported data
-                        const prospectsToInsert = data.prospects.map(p => ({ ...p, user_id: user.id }));
+                        const prospectsToInsert = data.prospects.map(p => ({ ...p, user_id: user.id, id: undefined })); // Ensure DB generates new IDs
                         const availabilityToInsert = Object.keys(data.availability).map(date => ({ date, time_slots: data.availability[date], user_id: user.id }));
 
-                        await supabase.from('prospects').insert(prospectsToInsert);
-                        if(availabilityToInsert.length > 0) {
-                            await supabase.from('availability').insert(availabilityToInsert);
-                        }
+                        if(prospectsToInsert.length > 0) await supabase.from('prospects').insert(prospectsToInsert);
+                        if(availabilityToInsert.length > 0) await supabase.from('availability').insert(availabilityToInsert);
                         
                         alert(translations[currentLang].importSuccess);
                     }
@@ -1880,14 +1903,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 slotBtn.className = 'time-slot'; slotBtn.dataset.time = timeStr;
                 const tempDate = new Date(2000, 0, 1, hour, min);
                 slotBtn.textContent = (currentLang === 'zh-CN') ? formatChineseTime(tempDate) : tempDate.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true});
+                
+                // FIXED: Robust isBooked check
                 const isBooked = appointmentsOnDay.some(p => {
-                    const apptTime = p.stp_time && new Date(p.stp_time).toDateString() === date.toDateString() ? new Date(p.stp_time) : (p.gms_time ? new Date(p.gms_time) : null);
-                    if(!apptTime) return false;
-
                     const slotStart = new Date(date.getFullYear(), date.getMonth(), date.getDate(), hour, min);
-                    const slotEnd = new Date(slotStart.getTime() + 30 * 60000);
-                    return apptTime >= slotStart && apptTime < slotEnd;
+                    const slotEnd = new Date(slotStart.getTime() + 30 * 60 * 1000);
+                    
+                    let stpBooked = false;
+                    if (p.stp_time) {
+                        const stpTime = new Date(p.stp_time);
+                        if (stpTime >= slotStart && stpTime < slotEnd) stpBooked = true;
+                    }
+
+                    let gmsBooked = false;
+                    if (p.gms_time) {
+                        const gmsTime = new Date(p.gms_time);
+                        if (gmsTime >= slotStart && gmsTime < slotEnd) gmsBooked = true;
+                    }
+                    return stpBooked || gmsBooked;
                 });
+
                 if (isBooked) { slotBtn.classList.add('booked'); slotBtn.disabled = true; } 
                 else if (savedSlots.includes(timeStr)) { slotBtn.classList.add('available'); }
                 if (!isBooked) { slotBtn.onclick = () => slotBtn.classList.toggle('available'); }
@@ -1908,13 +1943,55 @@ document.addEventListener('DOMContentLoaded', () => {
             .from('availability')
             .upsert({ date: dateKey, time_slots: availableSlots, user_id: user.id }, { onConflict: 'date, user_id' });
 
-        if (error) {
-            console.error('Error saving availability:', error);
-        }
+        if (error) console.error('Error saving availability:', error);
 
         plannerModal.style.display = 'none';
     });
     
+    // NEW: Helper function to correctly determine a 30-min slot from a precise time
+    function getSlotFromTime(date) {
+        if (!date) return null;
+        const minutes = date.getMinutes() < 30 ? '00' : '30';
+        return `${String(date.getHours()).padStart(2, '0')}:${minutes}`;
+    }
+
+    // NEW: Function to remove a booked slot from the DB
+    async function removeBookedSlotFromDB(dateTimeString) {
+        if (!dateTimeString) return;
+        const date = new Date(dateTimeString);
+        const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        const timeSlot = getSlotFromTime(date);
+        
+        const { data: { user } } = await supabase.auth.getUser();
+        if(!user || !availability[dateKey]) return;
+
+        const updatedSlots = availability[dateKey].filter(slot => slot !== timeSlot);
+
+        if (updatedSlots.length === 0) {
+            await supabase.from('availability').delete().match({ date: dateKey, user_id: user.id });
+        } else {
+            await supabase.from('availability').update({ time_slots: updatedSlots }).match({ date: dateKey, user_id: user.id });
+        }
+    }
+
+    // NEW: Function to add a freed-up slot back to the DB
+    async function addBackAvailabilityToDB(dateTimeString) {
+        if (!dateTimeString) return;
+        const date = new Date(dateTimeString);
+        const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        const timeSlot = getSlotFromTime(date);
+        
+        const { data: { user } } = await supabase.auth.getUser();
+        if(!user) return;
+        
+        const currentSlots = availability[dateKey] || [];
+        if (!currentSlots.includes(timeSlot)) {
+            currentSlots.push(timeSlot);
+            currentSlots.sort();
+            await supabase.from('availability').upsert({ date: dateKey, time_slots: currentSlots, user_id: user.id }, { onConflict: 'date, user_id' });
+        }
+    }
+
     function renderAvailableSlotsSidebar() {
         const listContainer = document.getElementById('available-slots-list');
         const modalListContainer = document.getElementById('modal-slots-list');
@@ -1983,10 +2060,10 @@ document.addEventListener('DOMContentLoaded', () => {
             let appointmentTime = null;
             let appointmentType = '';
 
-            if (p.stp_time) {
+            if (p.status === 'STP' && p.stp_time) {
                 appointmentTime = new Date(p.stp_time);
                 appointmentType = 'STP';
-            } else if (p.gms_time) {
+            } else if (p.status === 'GMS_Appointment' && p.gms_time) {
                 appointmentTime = new Date(p.gms_time);
                 appointmentType = 'GMS';
             }
@@ -2012,7 +2089,42 @@ document.addEventListener('DOMContentLoaded', () => {
     // =======================================================
     // START: APP INITIALIZATION LOGIC
     // =======================================================
-    function startApp() {
+    // NEW: Function to clean up expired availability from the database
+    async function cleanupExpiredAvailability() {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const today = new Date();
+        const todayDateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        
+        // 1. Delete all availability records for dates before today
+        const { error: deleteError } = await supabase.from('availability').delete().lt('date', todayDateString);
+        if(deleteError) console.error("Error cleaning past dates:", deleteError);
+
+        // 2. Fetch today's availability record
+        const { data: todayData, error: fetchError } = await supabase.from('availability').select('*').eq('date', todayDateString).single();
+        if (fetchError || !todayData) return; // No record for today, nothing to do
+
+        // 3. Filter out past time slots from today's record
+        const now = new Date();
+        const futureSlots = todayData.time_slots.filter(timeStr => {
+            const [hour, minute] = timeStr.split(':');
+            const slotDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hour, minute);
+            return slotDate > now;
+        });
+
+        // 4. If slots have changed, update or delete the record
+        if (futureSlots.length !== todayData.time_slots.length) {
+            if (futureSlots.length === 0) {
+                await supabase.from('availability').delete().eq('id', todayData.id);
+            } else {
+                await supabase.from('availability').update({ time_slots: futureSlots }).eq('id', todayData.id);
+            }
+        }
+    }
+
+
+    async function startApp() {
         setLanguage('zh-CN');
         try {
             const now = new Date();
@@ -2020,7 +2132,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Failed to initialize analytics picker, but continuing:", error);
         }
-        renderAll();
+        await cleanupExpiredAvailability(); // Run cleanup on startup
+        await renderAll();
         setupNotifications();
 
         supabase
@@ -2094,11 +2207,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = document.getElementById('auth-password').value;
         
         if (isLoginView) {
-            // Login Logic
             const { error } = await supabase.auth.signInWithPassword({ email, password });
             if (error) alert(error.message);
         } else {
-            // Sign Up Logic
             const confirmPassword = document.getElementById('auth-confirm-password').value;
             if (password !== confirmPassword) {
                 alert("Passwords do not match.");
@@ -2109,7 +2220,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert(error.message);
             } else {
                 alert('Sign up successful! Please check your email to verify.');
-                isLoginView = true; // Switch back to login view after successful signup
+                isLoginView = true;
                 updateAuthView();
             }
         }
@@ -2141,14 +2252,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (userEmailEl) {
                 userEmailEl.textContent = user.email;
             }
-            startApp();
+            await startApp();
         } else {
             authContainer.style.display = 'flex';
             mainApp.style.display = 'none';
             if (userEmailEl) {
                 userEmailEl.textContent = '';
             }
-            updateAuthView(); // Initialize the auth form view
+            updateAuthView(); 
         }
     }
 
@@ -2159,7 +2270,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     (async () => {
         const { data: { user } } = await supabase.auth.getUser();
-        updateUserUI(user);
+        await updateUserUI(user);
     })();
     // --- END: FINAL AUTH LOGIC & APP STARTUP ---
     
