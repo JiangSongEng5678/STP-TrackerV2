@@ -2241,6 +2241,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     logoutBtn.addEventListener('click', async () => {
+        sessionStorage.removeItem('hasSeenWelcome'); // Clear session on logout
         await supabase.auth.signOut();
     });
 
@@ -2254,25 +2255,31 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     async function updateUserUI(user) {
-        setTimeout(() => {
-            document.getElementById('loading-screen').classList.add('hidden');
-        }, 1500);
-
-        const userEmailEl = document.getElementById('user-email');
+        const loadingScreen = document.getElementById('loading-screen');
+        const hasSeenWelcome = sessionStorage.getItem('hasSeenWelcome');
 
         if (user) {
+            if (!hasSeenWelcome) {
+                // First time in session, show animation
+                setTimeout(() => {
+                    loadingScreen.classList.add('hidden');
+                    sessionStorage.setItem('hasSeenWelcome', 'true');
+                }, 1500);
+            } else {
+                // Already seen, hide immediately
+                loadingScreen.style.display = 'none';
+            }
+
             authContainer.style.display = 'none';
             mainApp.style.display = 'flex';
-            if (userEmailEl) {
-                userEmailEl.textContent = user.email;
-            }
+            document.getElementById('user-email').textContent = user.email;
             await startApp();
         } else {
+            // Not logged in
+            loadingScreen.style.display = 'none'; // Hide loading screen immediately
             authContainer.style.display = 'flex';
             mainApp.style.display = 'none';
-            if (userEmailEl) {
-                userEmailEl.textContent = '';
-            }
+            document.getElementById('user-email').textContent = '';
             updateAuthView(); 
         }
     }
