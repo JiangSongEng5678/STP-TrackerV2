@@ -1403,6 +1403,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // REFINED Dashboard Logic
     function renderDashboard() {
         const appointmentsGrid = document.getElementById('appointments-grid'); 
         const followUpsGrid = document.getElementById('follow-ups-grid');
@@ -1411,22 +1412,38 @@ document.addEventListener('DOMContentLoaded', () => {
         const now = new Date(); 
         let upcoming = [];
         prospects.forEach(p => {
-            if (p.stp_time && new Date(p.stp_time) > now) upcoming.push({ p, type: 'STP', date: new Date(p.stp_time) });
-            if (p.gms_time && new Date(p.gms_time) > now) upcoming.push({ p, type: 'GMS', date: new Date(p.gms_time) });
+            // Only show appointments that match the current status
+            if (p.status === 'STP' && p.stp_time && new Date(p.stp_time) > now) {
+                upcoming.push({ p, type: 'STP', date: new Date(p.stp_time) });
+            } else if (p.status === 'GMS_Appointment' && p.gms_time && new Date(p.gms_time) > now) {
+                upcoming.push({ p, type: 'GMS', date: new Date(p.gms_time) });
+            }
         });
         upcoming.sort((a, b) => a.date - b.date);
-        if (upcoming.length === 0) appointmentsGrid.innerHTML = `<p>${translations[currentLang].noAppointmentsText}</p>`;
-        else upcoming.forEach(item => { const card = document.createElement('div'); card.className = 'appointment-card'; card.innerHTML = `<h3>${item.p.name}</h3><p><strong>${item.type}:</strong> ${formatDate(item.date)}</p>`; appointmentsGrid.appendChild(card); });
+        if (upcoming.length === 0) {
+            appointmentsGrid.innerHTML = `<p>${translations[currentLang].noAppointmentsText}</p>`;
+        } else {
+            upcoming.forEach(item => { 
+                const card = document.createElement('div'); 
+                card.className = 'appointment-card'; 
+                card.innerHTML = `<h3>${item.p.name}</h3><p><strong>${item.type}:</strong> ${formatDate(item.date)}</p>`; 
+                appointmentsGrid.appendChild(card); 
+            });
+        }
         
         const followUps = prospects.filter(p => p.status && p.status.startsWith('KIT_'));
-        if (followUps.length === 0) followUpsGrid.innerHTML = `<p>${translations[currentLang].noFollowUpsText}</p>`;
-        else followUps.forEach(p => {
-            const card = document.createElement('div'); card.className = 'reminder-card';
-            card.innerHTML = `<h3>${p.name}</h3><p><strong>${translations[currentLang].status}:</strong> ${translations[currentLang][p.status]}</p><p><strong>${translations[currentLang].kitCounter}:</strong> ${p.kit_counter || 0}</p>
-            <div class="prospect-actions"><button class="btn-primary" data-id="${p.id}" data-action="${p.status === 'KIT_STP' ? 'schedule_gms' : 'joined'}">${p.status === 'KIT_STP' ? translations[currentLang].actionScheduleGMS : translations[currentLang].actionJoined}</button>
-            <button class="btn-warning" data-id="${p.id}" data-action="follow_up">${translations[currentLang].actionFollowUp}</button></div>`;
-            followUpsGrid.appendChild(card);
-        });
+        if (followUps.length === 0) {
+            followUpsGrid.innerHTML = `<p>${translations[currentLang].noFollowUpsText}</p>`;
+        } else {
+            followUps.forEach(p => {
+                const card = document.createElement('div'); 
+                card.className = 'reminder-card';
+                card.innerHTML = `<h3>${p.name}</h3><p><strong>${translations[currentLang].status}:</strong> ${translations[currentLang][p.status]}</p><p><strong>${translations[currentLang].kitCounter}:</strong> ${p.kit_counter || 0}</p>
+                <div class="prospect-actions"><button class="btn-primary" data-id="${p.id}" data-action="${p.status === 'KIT_STP' ? 'schedule_gms' : 'joined'}">${p.status === 'KIT_STP' ? translations[currentLang].actionScheduleGMS : translations[currentLang].actionJoined}</button>
+                <button class="btn-warning" data-id="${p.id}" data-action="follow_up">${translations[currentLang].actionFollowUp}</button></div>`;
+                followUpsGrid.appendChild(card);
+            });
+        }
         followUpsGrid.querySelectorAll('.prospect-actions button').forEach(button => button.addEventListener('click', (e) => openActionModal(e.target.dataset.id, e.target.dataset.action)));
     }
     
@@ -1643,27 +1660,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
         prospectsToAnalyze.forEach(p => {
             if (!p.status_history) p.status_history = [];
-            // Count New STPs based on creation date
-            const createdDate = new Date(p.created_at);
-            if (createdDate.getFullYear() === year && createdDate.getMonth() + 1 === month) {
-                newStps++;
-            }
+            
+            const firstStpInMonth = p.status_history.find(h => {
+                const historyDate = new Date(h.date);
+                return h.status === 'STP' && historyDate.getFullYear() === year && historyDate.getMonth() + 1 === month;
+            });
+            if (firstStpInMonth) newStps++;
 
-            // Find the first GMS appointment in the month
             const firstGmsInMonth = p.status_history.find(h => {
                 const historyDate = new Date(h.date);
                 return h.status === 'GMS_Appointment' && historyDate.getFullYear() === year && historyDate.getMonth() + 1 === month;
             });
             if (firstGmsInMonth) newGms++;
 
-            // Find the first time they Joined in the month
             const firstJoinInMonth = p.status_history.find(h => {
                 const historyDate = new Date(h.date);
                 return h.status === 'Joined' && historyDate.getFullYear() === year && historyDate.getMonth() + 1 === month;
             });
             if (firstJoinInMonth) newJoins++;
             
-            // Find the first time they were Disqualified or Not Joining in the month
             const firstDisqualifiedInMonth = p.status_history.find(h => {
                  const historyDate = new Date(h.date);
                  return (h.status === 'Disqualified' || h.status === 'Not_Joining') && historyDate.getFullYear() === year && historyDate.getMonth() + 1 === month;
@@ -1694,27 +1709,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
             prospectsToAnalyze.forEach(p => {
                  if (!p.status_history) p.status_history = [];
-                // Count New STPs
-                const createdDate = new Date(p.created_at);
-                if (createdDate.getFullYear() === year && createdDate.getMonth() + 1 === month) {
-                    stps++;
-                }
+                
+                const firstStpInMonth = p.status_history.find(h => {
+                    const historyDate = new Date(h.date);
+                    return h.status === 'STP' && historyDate.getFullYear() === year && historyDate.getMonth() + 1 === month;
+                });
+                if (firstStpInMonth) stps++;
 
-                // Count New GMS
                 const firstGmsInMonth = p.status_history.find(h => {
                     const historyDate = new Date(h.date);
                     return h.status === 'GMS_Appointment' && historyDate.getFullYear() === year && historyDate.getMonth() + 1 === month;
                 });
                 if (firstGmsInMonth) gms++;
 
-                // Count New Joins
                 const firstJoinInMonth = p.status_history.find(h => {
                     const historyDate = new Date(h.date);
                     return h.status === 'Joined' && historyDate.getFullYear() === year && historyDate.getMonth() + 1 === month;
                 });
                 if (firstJoinInMonth) joins++;
                 
-                // Count Disqualified / Not Joining
                 const firstDisqualifiedInMonth = p.status_history.find(h => {
                     const historyDate = new Date(h.date);
                     return (h.status === 'Disqualified' || h.status === 'Not_Joining') && historyDate.getFullYear() === year && historyDate.getMonth() + 1 === month;
