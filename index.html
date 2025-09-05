@@ -1120,7 +1120,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('prospect-form').addEventListener('submit', async (e) => {
         e.preventDefault(); 
         const id = document.getElementById('prospect-id').value;
-        const stpTime = document.getElementById('stp-datetime').value;
+        const stpTimeValue = document.getElementById('stp-datetime').value;
+        if (!stpTimeValue) { alert('Please select an STP time.'); return; }
+        const stpTime = new Date(stpTimeValue).toISOString();
+
         const ownerType = document.getElementById('owner-type').value;
         const downlineName = document.getElementById('downline-name').value.trim();
 
@@ -1128,7 +1131,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(translations[currentLang].errorDownlineNameRequired);
             return;
         }
-        if (isTimeSlotBooked(stpTime, id)) {
+        if (isTimeSlotBooked(stpTimeValue, id)) {
             alert(translations[currentLang].errorDoubleBooking);
             return;
         }
@@ -1152,10 +1155,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (id) { // Edit
             const originalStpTime = document.getElementById('original-stp-time').value;
-            const { data, error } = await supabase
-                .from('prospects')
-                .update(prospectData)
-                .eq('id', id);
+            const { data, error } = await supabase.from('prospects').update(prospectData).eq('id', id);
 
             if (error) {
                 console.error('Error updating prospect:', error);
@@ -1168,9 +1168,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         await supabase.from('prospects').update({ notes: updatedNotes }).eq('id', id);
                     }
                 }
-                if (originalStpTime !== stpTime) {
+                if (originalStpTime !== stpTimeValue) {
                     await addBackAvailabilityToDB(originalStpTime);
-                    await removeBookedSlotFromDB(stpTime);
+                    await removeBookedSlotFromDB(stpTimeValue);
                 }
             }
         } else { // New
@@ -1181,7 +1181,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (error) {
                 console.error('Error creating prospect:', error);
             } else {
-                await removeBookedSlotFromDB(stpTime);
+                await removeBookedSlotFromDB(stpTimeValue);
             }
         }
         
@@ -1203,8 +1203,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (!p.tags) p.tags = [];
         
-        const gmsTime = document.getElementById('gms-datetime').value;
-        if ((action === 'schedule_gms' || action === 'edit_gms') && isTimeSlotBooked(gmsTime, p.id)) {
+        const gmsTimeValue = document.getElementById('gms-datetime').value;
+        if ((action === 'schedule_gms' || action === 'edit_gms') && isTimeSlotBooked(gmsTimeValue, p.id)) {
             alert(translations[currentLang].errorDoubleBooking);
             return;
         }
@@ -1220,15 +1220,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         switch(action) {
             case 'schedule_gms': 
-                Object.assign(updateData, { status: 'GMS_Appointment', gms_time: gmsTime, kit_counter: 0 });
-                await removeBookedSlotFromDB(gmsTime);
+                Object.assign(updateData, { status: 'GMS_Appointment', gms_time: new Date(gmsTimeValue).toISOString(), kit_counter: 0 });
+                await removeBookedSlotFromDB(gmsTimeValue);
                 break;
             case 'edit_gms':
                 const originalGmsTime = document.getElementById('original-gms-time').value;
-                Object.assign(updateData, { gms_time: gmsTime });
-                if(originalGmsTime !== gmsTime) {
+                Object.assign(updateData, { gms_time: new Date(gmsTimeValue).toISOString() });
+                if(originalGmsTime !== gmsTimeValue) {
                     await addBackAvailabilityToDB(originalGmsTime);
-                    await removeBookedSlotFromDB(gmsTime);
+                    await removeBookedSlotFromDB(gmsTimeValue);
                 }
                 break;
             case 'kit_stp': 
@@ -1267,9 +1267,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const gmsGroup = document.getElementById('gms-schedule-group'); 
         gmsGroup.style.display = (action === 'schedule_gms' || action === 'edit_gms') ? 'block' : 'none'; 
         document.getElementById('gms-datetime').required = (action === 'schedule_gms' || action === 'edit_gms');
-        if (action === 'edit_gms') {
-            gmsPicker.setDate(p.gms_time, true);
-            document.getElementById('original-gms-time').value = p.gms_time;
+        if (action === 'edit_gms' && p.gms_time) {
+            gmsPicker.setDate(new Date(p.gms_time), true);
+            document.getElementById('original-gms-time').value = new Date(p.gms_time).toISOString();
         }
         actionModal.style.display = 'flex';
     }
@@ -1294,8 +1294,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             downlineGroup.style.display = 'none';
         }
-        stpPicker.setDate(p.stp_time, true); 
-        document.getElementById('original-stp-time').value = p.stp_time;
+        stpPicker.setDate(new Date(p.stp_time), true); 
+        document.getElementById('original-stp-time').value = new Date(p.stp_time).toISOString();
         document.getElementById('notes').value = ''; 
         prospectModal.style.display = 'flex';
     }
@@ -1948,14 +1948,12 @@ document.addEventListener('DOMContentLoaded', () => {
         plannerModal.style.display = 'none';
     });
     
-    // NEW: Helper function to correctly determine a 30-min slot from a precise time
     function getSlotFromTime(date) {
         if (!date) return null;
         const minutes = date.getMinutes() < 30 ? '00' : '30';
         return `${String(date.getHours()).padStart(2, '0')}:${minutes}`;
     }
 
-    // NEW: Function to remove a booked slot from the DB
     async function removeBookedSlotFromDB(dateTimeString) {
         if (!dateTimeString) return;
         const date = new Date(dateTimeString);
@@ -1974,7 +1972,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // NEW: Function to add a freed-up slot back to the DB
     async function addBackAvailabilityToDB(dateTimeString) {
         if (!dateTimeString) return;
         const date = new Date(dateTimeString);
@@ -2089,7 +2086,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // =======================================================
     // START: APP INITIALIZATION LOGIC
     // =======================================================
-    // NEW: Function to clean up expired availability from the database
     async function cleanupExpiredAvailability() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
@@ -2097,15 +2093,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const today = new Date();
         const todayDateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
         
-        // 1. Delete all availability records for dates before today
         const { error: deleteError } = await supabase.from('availability').delete().lt('date', todayDateString);
         if(deleteError) console.error("Error cleaning past dates:", deleteError);
 
-        // 2. Fetch today's availability record
         const { data: todayData, error: fetchError } = await supabase.from('availability').select('*').eq('date', todayDateString).single();
-        if (fetchError || !todayData) return; // No record for today, nothing to do
+        if (fetchError || !todayData) return;
 
-        // 3. Filter out past time slots from today's record
         const now = new Date();
         const futureSlots = todayData.time_slots.filter(timeStr => {
             const [hour, minute] = timeStr.split(':');
@@ -2113,7 +2106,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return slotDate > now;
         });
 
-        // 4. If slots have changed, update or delete the record
         if (futureSlots.length !== todayData.time_slots.length) {
             if (futureSlots.length === 0) {
                 await supabase.from('availability').delete().eq('id', todayData.id);
@@ -2132,7 +2124,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Failed to initialize analytics picker, but continuing:", error);
         }
-        await cleanupExpiredAvailability(); // Run cleanup on startup
+        await cleanupExpiredAvailability();
         await renderAll();
         setupNotifications();
 
