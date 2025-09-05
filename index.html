@@ -780,7 +780,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ownerTypeLabel: "这位对象属于:", ownerUserOption: "我自己", ownerDownlineOption: "我的下线", downlineNameLabel: "下线名字:", downlineInfo: "下线对象: ",
             prospectViewToggleMine: "我的对象", prospectViewToggleDownlines: "下线对象", prospectViewToggleAll: "全部",
             analyticsViewToggleMine: "我的分析", analyticsViewToggleDownlines: "下线支持分析", downlineFilterLabel: "筛选下线:", allDownlinesOption: "所有下线",
-            errorDoubleBooking: "此时间段已被预约，请选择其他时间。", errorDownlineNameRequired: "请输入下线名字。",
+            errorDoubleBooking: "此时间段已被预约，请选择其他时间。", errorDownlineNameRequired: "请输入下线名字。", errorGmsBeforeStp: "GMS 时间不能早于 STP 时间。请选择一个有效的时间。",
             confirmJoin: "确定要将对象标记为“已加入”吗？", confirmDisqualify: "确定要将此对象标记为“不合适”吗？", confirmNotJoining: "确定要将此对象标记为“不加入”吗？",
             STP: "已邀约STP", GMS_Appointment: "已邀约GMS", KIT_STP: "跟进中 (STP后)", KIT_GMS: "跟进中 (GMS后)", Joined: "已加入", Disqualified: "不合适", Not_Joining: "不加入",
             actionScheduleGMS: "安排GMS", actionKeepInTouch: "保持联系", actionDisqualify: "不合适", actionJoined: "已加入", actionNotJoining: "不加入", actionFollowUp: "进行跟进", actionEditGMS: "修改GMS时间",
@@ -855,7 +855,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ownerTypeLabel: "This prospect belongs to:", ownerUserOption: "Myself", ownerDownlineOption: "My Downline", downlineNameLabel: "Downline's Name:", downlineInfo: "Downline's Prospect: ",
             prospectViewToggleMine: "My Prospects", prospectViewToggleDownlines: "Downline's", prospectViewToggleAll: "All",
             analyticsViewToggleMine: "My Analytics", analyticsViewToggleDownlines: "Downline Support", downlineFilterLabel: "Filter by Downline:", allDownlinesOption: "All Downlines",
-            errorDoubleBooking: "This time slot is already booked. Please choose another time.", errorDownlineNameRequired: "Please enter the downline's name.",
+            errorDoubleBooking: "This time slot is already booked. Please choose another time.", errorDownlineNameRequired: "Please enter the downline's name.", errorGmsBeforeStp: "GMS time cannot be earlier than STP time. Please select a valid time.",
             confirmJoin: "Are you sure you want to mark this prospect as 'Joined'?", confirmDisqualify: "Are you sure you want to mark this prospect as 'Disqualified'?", confirmNotJoining: "Are you sure you want to mark this prospect as 'Not Joining'?",
             STP: "STP Scheduled", GMS_Appointment: "GMS Scheduled", KIT_STP: "Keep In Touch (Post-STP)", KIT_GMS: "Keep In Touch (Post-GMS)", Joined: "Joined",
             Disqualified: "Disqualified", Not_Joining: "Not Joining", actionScheduleGMS: "Schedule GMS", actionKeepInTouch: "Keep In Touch", actionDisqualify: "Disqualify",
@@ -1231,6 +1231,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!p.status_history) p.status_history = [];
         
         const gmsTimeValue = document.getElementById('gms-datetime').value;
+        
+        // LOGIC REFINEMENT: Ensure GMS time is after STP time
+        if (gmsTimeValue && p.stp_time) {
+            if (new Date(gmsTimeValue) < new Date(p.stp_time)) {
+                alert(translations[currentLang].errorGmsBeforeStp);
+                return;
+            }
+        }
+
         if ((action === 'schedule_gms' || action === 'edit_gms') && isTimeSlotBooked(gmsTimeValue, p.id)) {
             alert(translations[currentLang].errorDoubleBooking);
             return;
@@ -1308,7 +1317,6 @@ document.addEventListener('DOMContentLoaded', () => {
             gmsPicker.setDate(new Date(p.gms_time), true);
             document.getElementById('original-gms-time').value = new Date(p.gms_time).toISOString();
         }
-        actionModal.style.display = 'flex';
     }
 
     function openEditModal(prospectId) {
