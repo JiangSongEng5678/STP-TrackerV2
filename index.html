@@ -376,41 +376,54 @@
             .prospect-meta .separator { display: none; }
 
             .dashboard-header {
-                flex-direction: column;      /* Stack title and buttons vertically */
-                align-items: flex-start;   /* Align them to the left */
-                gap: 15px;                   /* Add space between the title and buttons */
-                margin-bottom: 20px;         /* Add space below the header to prevent overlap */
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+                margin-bottom: 20px;
             }
 
             .dashboard-header .controls {
-                display: grid;               /* Use grid for easy columns */
-                grid-template-columns: 1fr 1fr; /* Create a two-column layout for the buttons */
-                width: 100%;                 /* Make the container take full width */
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                width: 100%;
             }
 
+            /* MOBILE REFINEMENT: Filter Controls */
             .filter-controls {
                 display: grid;
-                grid-template-columns: 1fr 1fr; /* Two equal columns */
+                grid-template-columns: 1fr 1fr;
                 gap: 10px;
             }
 
             .filter-controls .search-bar {
-                grid-column: 1 / -1; /* Make search bar span both columns */
+                grid-column: 1 / -1;
+            }
+            
+            /* MOBILE REFINEMENT: Login Card */
+            .login-card { 
+                padding: 25px; 
             }
 
+            /* MOBILE REFINEMENT: Header Buttons */
+            header .controls .btn-success {
+                padding: 10px 15px;
+                font-size: 0.9em;
+            }
+
+            /* MOBILE REFINEMENT: Prospect Card Header */
             .prospect-card .card-header h3 {
                 display: flex;
                 flex-wrap: wrap;
                 align-items: center;
-                gap: 8px; /* Adds space between name and badge */
+                gap: 8px;
                 line-height: 1.4;
             }
 
+            /* MOBILE REFINEMENT: Prospect Action Buttons */
             .prospect-actions {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
             }
-            .login-card { padding: 25px; }
         }
     </style>
 </head>
@@ -1188,6 +1201,7 @@ document.addEventListener('DOMContentLoaded', () => {
             prospectData.notes = newNote ? [{ date: new Date().toISOString(), content: newNote }] : [];
             prospectData.status = 'STP';
             prospectData.kit_counter = 0;
+            prospectData.status_history = [{ status: 'STP', date: new Date().toISOString() }];
             const { data, error } = await supabase.from('prospects').insert([prospectData]);
             if (error) {
                 console.error('Error creating prospect:', error);
@@ -1214,6 +1228,7 @@ document.addEventListener('DOMContentLoaded', () => {
             p.notes.push({ date: new Date().toISOString(), content: `[${action}] ${notes}` });
         }
         if (!p.tags) p.tags = [];
+        if (!p.status_history) p.status_history = [];
         
         const gmsTimeValue = document.getElementById('gms-datetime').value;
         if ((action === 'schedule_gms' || action === 'edit_gms') && isTimeSlotBooked(gmsTimeValue, p.id)) {
@@ -1233,11 +1248,13 @@ document.addEventListener('DOMContentLoaded', () => {
         switch(action) {
             case 'schedule_gms': 
                 Object.assign(updateData, { status: 'GMS_Appointment', gms_time: new Date(gmsTimeValue).toISOString(), kit_counter: 0 });
+                p.status_history.push({ status: 'GMS_Appointment', date: new Date().toISOString() });
                 await removeBookedSlotFromDB(gmsTimeValue);
                 break;
             case 'edit_gms':
                 const originalGmsTime = document.getElementById('original-gms-time').value;
                 Object.assign(updateData, { gms_time: new Date(gmsTimeValue).toISOString() });
+                p.status_history.push({ status: 'GMS_Rescheduled', date: new Date().toISOString() });
                 if(originalGmsTime !== gmsTimeValue) {
                     await addBackAvailabilityToDB(originalGmsTime);
                     await removeBookedSlotFromDB(gmsTimeValue);
@@ -1245,23 +1262,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
             case 'kit_stp': 
                 Object.assign(updateData, { status: 'KIT_STP', kit_counter: 1 });
+                p.status_history.push({ status: 'KIT_STP', date: new Date().toISOString() });
                 break;
             case 'kit_gms': 
                 Object.assign(updateData, { status: 'KIT_GMS', kit_counter: 1 });
+                p.status_history.push({ status: 'KIT_GMS', date: new Date().toISOString() });
                 break;
             case 'disqualify': 
                 Object.assign(updateData, { status: 'Disqualified' });
+                p.status_history.push({ status: 'Disqualified', date: new Date().toISOString() });
                 break;
             case 'not_joining': 
                 Object.assign(updateData, { status: 'Not_Joining' });
+                 p.status_history.push({ status: 'Not_Joining', date: new Date().toISOString() });
                 break;
             case 'joined': 
                 Object.assign(updateData, { status: 'Joined' });
+                 p.status_history.push({ status: 'Joined', date: new Date().toISOString() });
                 break;
             case 'follow_up': 
                 Object.assign(updateData, { kit_counter: (p.kit_counter || 0) + 1 });
+                p.status_history.push({ status: 'Follow_Up', date: new Date().toISOString() });
                 break;
         }
+        updateData.status_history = p.status_history;
 
         const { data, error } = await supabase.from('prospects').update(updateData).eq('id', id);
         if (error) console.error('Error updating prospect status:', error);
@@ -1600,6 +1624,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // RECODED: Analytics function for accuracy
     function renderAnalytics() {
         const monthInput = document.getElementById('analytics-month');
         const selectedMonth = monthInput.value;
@@ -1615,32 +1640,37 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let newStps = 0, newGms = 0, newJoins = 0, newDisqualified = 0;
+
         prospectsToAnalyze.forEach(p => {
-            if (p.created_at) {
-                const createdDate = new Date(p.created_at);
-                if (createdDate.getFullYear() === year && createdDate.getMonth() + 1 === month) {
-                    newStps++;
-                }
+            if (!p.status_history) p.status_history = [];
+            // Count New STPs based on creation date
+            const createdDate = new Date(p.created_at);
+            if (createdDate.getFullYear() === year && createdDate.getMonth() + 1 === month) {
+                newStps++;
             }
-            if (p.gms_time) {
-                const gmsDate = new Date(p.gms_time);
-                if (gmsDate.getFullYear() === year && gmsDate.getMonth() + 1 === month) {
-                    newGms++;
-                }
-            }
-            if (p.status === 'Joined') {
-                 const joinedDate = new Date(p.updated_at); // Assuming status update changes updated_at
-                 if (joinedDate.getFullYear() === year && joinedDate.getMonth() + 1 === month) {
-                    newJoins++;
-                 }
-            }
-             if (p.status === 'Disqualified' || p.status === 'Not_Joining') {
-                 const disqualifiedDate = new Date(p.updated_at);
-                 if (disqualifiedDate.getFullYear() === year && disqualifiedDate.getMonth() + 1 === month) {
-                    newDisqualified++;
-                 }
-            }
+
+            // Find the first GMS appointment in the month
+            const firstGmsInMonth = p.status_history.find(h => {
+                const historyDate = new Date(h.date);
+                return h.status === 'GMS_Appointment' && historyDate.getFullYear() === year && historyDate.getMonth() + 1 === month;
+            });
+            if (firstGmsInMonth) newGms++;
+
+            // Find the first time they Joined in the month
+            const firstJoinInMonth = p.status_history.find(h => {
+                const historyDate = new Date(h.date);
+                return h.status === 'Joined' && historyDate.getFullYear() === year && historyDate.getMonth() + 1 === month;
+            });
+            if (firstJoinInMonth) newJoins++;
+            
+            // Find the first time they were Disqualified or Not Joining in the month
+            const firstDisqualifiedInMonth = p.status_history.find(h => {
+                 const historyDate = new Date(h.date);
+                 return (h.status === 'Disqualified' || h.status === 'Not_Joining') && historyDate.getFullYear() === year && historyDate.getMonth() + 1 === month;
+            });
+            if(firstDisqualifiedInMonth) newDisqualified++;
         });
+
         const summaryDiv = document.getElementById('analytics-summary');
         const t = translations[currentLang].analytics;
         summaryDiv.innerHTML = `<div class="analytics-card"><h4>${t.new_stps}</h4><div class="value">${newStps}</div></div><div class="analytics-card"><h4>${t.new_gms}</h4><div class="value">${newGms}</div></div>
@@ -1649,6 +1679,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTrendChart(prospectsToAnalyze);
     }
     
+    // RECODED: Trend chart data function for accuracy
     function getMonthlyTrendData(prospectsToAnalyze) {
         const data = { labels: [], datasets: { stps: [], gms: [], joins: [], disqualified: [] } };
         const now = new Date();
@@ -1660,31 +1691,35 @@ document.addEventListener('DOMContentLoaded', () => {
             data.labels.push(monthName);
 
             let stps = 0, gms = 0, joins = 0, disqualified = 0;
+
             prospectsToAnalyze.forEach(p => {
-                if(p.created_at) {
-                    const createdDate = new Date(p.created_at);
-                    if (createdDate.getFullYear() === year && createdDate.getMonth() + 1 === month) {
-                        stps++;
-                    }
+                 if (!p.status_history) p.status_history = [];
+                // Count New STPs
+                const createdDate = new Date(p.created_at);
+                if (createdDate.getFullYear() === year && createdDate.getMonth() + 1 === month) {
+                    stps++;
                 }
-                if (p.gms_time) {
-                    const gmsDate = new Date(p.gms_time);
-                    if (gmsDate.getFullYear() === year && gmsDate.getMonth() + 1 === month) {
-                        gms++;
-                    }
-                }
-                 if (p.status === 'Joined') {
-                    const joinedDate = new Date(p.updated_at);
-                     if (joinedDate.getFullYear() === year && joinedDate.getMonth() + 1 === month) {
-                        joins++;
-                     }
-                }
-                 if (p.status === 'Disqualified' || p.status === 'Not_Joining') {
-                    const disqualifiedDate = new Date(p.updated_at);
-                     if (disqualifiedDate.getFullYear() === year && disqualifiedDate.getMonth() + 1 === month) {
-                        disqualified++;
-                     }
-                }
+
+                // Count New GMS
+                const firstGmsInMonth = p.status_history.find(h => {
+                    const historyDate = new Date(h.date);
+                    return h.status === 'GMS_Appointment' && historyDate.getFullYear() === year && historyDate.getMonth() + 1 === month;
+                });
+                if (firstGmsInMonth) gms++;
+
+                // Count New Joins
+                const firstJoinInMonth = p.status_history.find(h => {
+                    const historyDate = new Date(h.date);
+                    return h.status === 'Joined' && historyDate.getFullYear() === year && historyDate.getMonth() + 1 === month;
+                });
+                if (firstJoinInMonth) joins++;
+                
+                // Count Disqualified / Not Joining
+                const firstDisqualifiedInMonth = p.status_history.find(h => {
+                    const historyDate = new Date(h.date);
+                    return (h.status === 'Disqualified' || h.status === 'Not_Joining') && historyDate.getFullYear() === year && historyDate.getMonth() + 1 === month;
+                });
+                if (firstDisqualifiedInMonth) disqualified++;
             });
             data.datasets.stps.push(stps);
             data.datasets.gms.push(gms);
