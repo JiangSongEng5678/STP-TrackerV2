@@ -1196,6 +1196,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
+        await renderAll(); // Refresh UI
         prospectModal.style.display = 'none';
     });
 
@@ -1265,6 +1266,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const { data, error } = await supabase.from('prospects').update(updateData).eq('id', id);
         if (error) console.error('Error updating prospect status:', error);
         
+        await renderAll(); // Refresh UI
         actionModal.style.display = 'none';
     });
 
@@ -1323,6 +1325,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     await addBackAvailabilityToDB(prospectToDelete.stp_time);
                     await addBackAvailabilityToDB(prospectToDelete.gms_time);
                 }
+                await renderAll(); // Refresh UI
             }
         }
     }
@@ -1787,6 +1790,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 alert(translations[currentLang].dataCleared);
             }
+            await renderAll(); // Refresh UI
         } 
     });
     
@@ -1831,6 +1835,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         if(prospectsToInsert.length > 0) await supabase.from('prospects').insert(prospectsToInsert);
                         if(availabilityToInsert.length > 0) await supabase.from('availability').insert(availabilityToInsert);
                         
+                        await renderAll(); // Refresh UI
                         alert(translations[currentLang].importSuccess);
                     }
                 } else {
@@ -1956,6 +1961,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (error) console.error('Error saving availability:', error);
 
+        await renderAll(); // Refresh UI
         plannerModal.style.display = 'none';
     });
     
@@ -2149,7 +2155,6 @@ document.addEventListener('DOMContentLoaded', () => {
         supabase
           .channel('public:prospects')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'prospects' }, payload => {
-            console.log('Prospect change received!', payload);
             renderAll();
           })
           .subscribe();
@@ -2157,7 +2162,6 @@ document.addEventListener('DOMContentLoaded', () => {
          supabase
           .channel('public:availability')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'availability' }, payload => {
-            console.log('Availability change received!', payload);
             renderAll();
           })
           .subscribe();
