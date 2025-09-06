@@ -341,27 +341,30 @@
         <div class="main-content">
             <div class="container">
                 <header>
-                    <h1 id="appTitle"></h1>
-                    <div class="controls"> <button class="btn-secondary" id="lang-toggle">English</button> <button class="btn-success" id="add-prospect-btn"></button> </div>
+                    <h1 id="appTitle">Amway Prospect Tracker💎</h1>
+                    <div class="controls">
+                        <button class="btn-secondary" id="lang-toggle">中文</button>
+                        <button class="btn-success" id="add-prospect-btn">➕ Add New Prospect</button>
+                    </div>
                 </header>
                 <div class="tabs">
-                    <button class="tab-button active" data-tab="dashboard" id="tabDashboard"></button>
-                    <button class="tab-button" data-tab="calendar" id="tabCalendar"></button>
-                    <button class="tab-button" data-tab="all-prospects" id="tabAllProspects"></button>
-                    <button class="tab-button" data-tab="analytics" id="tabAnalytics"></button>
-                    <button class="tab-button" data-tab="settings" id="tabSettings"></button>
-                    <button class="tab-button" data-tab="guide" id="tabGuide"></button>
+                    <button class="tab-button active" data-tab="dashboard" id="tabDashboard">Dashboard</button>
+                    <button class="tab-button" data-tab="calendar" id="tabCalendar">Calendar</button>
+                    <button class="tab-button" data-tab="all-prospects" id="tabAllProspects">All Prospects</button>
+                    <button class="tab-button" data-tab="analytics" id="tabAnalytics">Analytics</button>
+                    <button class="tab-button" data-tab="settings" id="tabSettings">Settings</button>
+                    <button class="tab-button" data-tab="guide" id="tabGuide">Guide</button>
                 </div>
                 <div id="dashboard" class="tab-content active">
                     <div class="dashboard-header">
-                        <h2 id="upcomingAppointmentsTitle"></h2>
+                        <h2 id="upcomingAppointmentsTitle">Upcoming Appointments 📅</h2>
                         <div class="controls">
-                            <button id="copy-stp-btn" class="btn-secondary"></button>
-                            <button id="copy-gms-btn" class="btn-secondary"></button>
+                            <button id="copy-stp-btn" class="btn-secondary">Copy STP List</button>
+                            <button id="copy-gms-btn" class="btn-secondary">Copy GMS List</button>
                         </div>
                     </div>
                     <div id="appointments-grid" class="reminders-grid"></div>
-                    <h2 id="followUpTitle" style="margin-top: 30px;"></h2> 
+                    <h2 id="followUpTitle" style="margin-top: 30px;">Follow-up Needed 📞</h2> 
                     <div id="follow-ups-grid" class="reminders-grid"></div>
                 </div>
                 <div id="calendar" class="tab-content">
@@ -376,7 +379,7 @@
                     <div id="calendar-grid-body" class="calendar-grid"></div>
                 </div>
                 <div id="all-prospects" class="tab-content">
-                    <h2 id="allProspectsTitle"></h2>
+                    <h2 id="allProspectsTitle">All Prospects</h2>
                     <div class="toggle-switch" id="prospect-view-toggle"></div>
                     <div class="filter-controls">
                         <input type="search" id="search-input" class="search-bar">
@@ -387,22 +390,22 @@
                     <div id="pagination-controls" class="pagination"></div>
                 </div>
                 <div id="analytics" class="tab-content">
-                    <h2 id="analyticsTitle"></h2>
+                    <h2 id="analyticsTitle">Monthly Analytics</h2>
                     <div class="toggle-switch" id="analytics-view-toggle"></div>
                     <div id="downline-analytics-controls" class="form-group" style="display: none;">
-                        <label for="downline-filter" id="downline-filter-label"></label>
+                        <label for="downline-filter" id="downline-filter-label">Filter by Downline:</label>
                         <select id="downline-filter"></select>
                     </div>
-                    <div class="form-group"> <label for="analytics-month" id="analyticsMonthLabel"></label> <input type="text" id="analytics-month"> </div>
+                    <div class="form-group"> <label for="analytics-month" id="analyticsMonthLabel">Select Month:</label> <input type="text" id="analytics-month"> </div>
                     <div id="analytics-summary" class="analytics-grid"></div>
                     <hr>
-                    <h3 id="analytics-trend-title" style="text-align: center; color: var(--primary-color);"></h3>
+                    <h3 id="analytics-trend-title" style="text-align: center; color: var(--primary-color);">6-Month Performance Trend</h3>
                     <div id="trend-chart-container" style="position: relative; height:40vh; width:100%; margin-top: 20px;">
                         <canvas id="analyticsTrendChart"></canvas>
                     </div>
                 </div>
                 <div id="settings" class="tab-content">
-                    <h2 id="settingsTitle"></h2> 
+                    <h2 id="settingsTitle">Data & Settings</h2> 
                     
                     <div class="settings-card" style="border-left-color: var(--warning-color);">
                          <h3>Account</h3>
@@ -413,19 +416,19 @@
                     </div>
 
                     <div class="settings-card" style="border-left-color: var(--accent-color); margin-top: 20px;">
-                        <h3 id="recurringAvailabilityTitle"></h3>
-                        <p id="recurringAvailabilityDesc"></p>
+                        <h3 id="recurringAvailabilityTitle">Set Recurring Weekly Availability</h3>
+                        <p id="recurringAvailabilityDesc">Set your fixed weekly schedule here. These slots will be automatically applied to future dates.</p>
                         <div id="recurring-availability-form"></div>
-                        <button id="save-recurring-btn" class="btn-primary" style="margin-top: 15px;"></button>
+                        <button id="save-recurring-btn" class="btn-primary" style="margin-top: 15px;">Save Recurring Slots</button>
                     </div>
                     
                     <div class="settings-card" style="border-left-color: var(--primary-color); margin-top: 20px;">
-                        <h3 id="backupSyncTitle"></h3>
-                        <p id="backupSyncDesc"></p>
+                        <h3 id="backupSyncTitle">Backup & Sync</h3>
+                        <p id="backupSyncDesc">Export all your data (prospects and availability) to a single file. You can Save this file as a backup or import it on another device to sync your data.</p>
                         <div class="controls">
-                            <button id="exportData" class="btn-primary"></button>
+                            <button id="exportData" class="btn-primary">Export Data</button>
                             <label class="btn-secondary btn-file-input">
-                                <span id="importDataLabel"></span> <input type="file" id="importData" accept=".json" style="display: none;">
+                                <span id="importDataLabel">Import Data</span> <input type="file" id="importData" accept=".json" style="display: none;">
                             </label>
                         </div>
                     </div>
@@ -437,171 +440,171 @@
                     </div>
 
                     <div class="settings-card" style="border-left-color: var(--danger-color); margin-top: 20px;">
-                         <h3 id="dangerZoneTitle"></h3>
-                         <p id="dangerZoneDesc"></p>
-                         <button id="clearData" class="btn-danger"></button>
+                         <h3 id="dangerZoneTitle">Danger Zone</h3>
+                         <p id="dangerZoneDesc">this action will permanently delete all your prospect and availability data.</p>
+                         <button id="clearData" class="btn-danger">Clear All Data</button>
                     </div>
                 </div>
                  <div id="guide" class="tab-content">
-                    <h2 id="guide-main-title"></h2>
+                    <h2 id="guide-main-title">Amway Prospect tracker - User Guide</h2>
                     <hr>
-                    <h3 id="guide-getting-started-title"></h3>
-                    <p id="guide-getting-started-p1"></p>
-                    <p><strong><span id="guide-getting-started-p2"></span></strong></p>
+                    <h3 id="guide-getting-started-title">1. Getting Started: How to Use This File</h3>
+                    <p id="guide-getting-started-p1">Welcome! This tracker is a standalone, single-file application. You don't need to install any special software to use it.</p>
+                    <p><strong><span id="guide-getting-started-p2">To begin:</span></strong></p>
                     <ul>
-                        <li id="guide-getting-started-li1"></li>
-                        <li id="guide-getting-started-li2"></li>
-                        <li id="guide-getting-started-li3"></li>
+                        <li id="guide-getting-started-li1"><b>Save the File:</b> Save the .html file to a convenient location on your computer, like your Desktop or a dedicated folder.</li>
+                        <li id="guide-getting-started-li2">Open the File:</b> To launch the application, simply double-click the file. It will open in your default web browser (Google Chrome, Firefox, or Microsoft Edge are recommended).</li>
+                        <li id="guide-getting-started-li3">Important Note on Data Storage:</b> Your data (all prospects, availability, etc.) is saved directly in your web browser's local storage. This means:<ul><li><b>It's Private:</b> Your data stays on your computer and is not sent over the internet.</li><li><b>It's Browser-Specific:</b> Data saved while using Chrome will not be visible if you open the file in Firefox, and vice-versa. Always use the same browser for consistency.</li><li><b>It's Device-Specific:</b> The data will not automatically sync to another computer or your phone. Please use the 'Backup & Sync' feature for this.</li></ul></li>
                     </ul>
 
-                    <h3 id="guide-interface-title"></h3>
-                    <p id="guide-interface-p1"></p>
+                    <h3 id="guide-interface-title">2. The Main Interface 🗺️</h3>
+                    <p id="guide-interface-p1">The application is designed to be responsive and looks great on desktop, tablet, or phone.</p>
                     <ul>
-                        <li id="guide-interface-li1"></li>
-                        <li id="guide-interface-li2"></li>
-                        <li id="guide-interface-li3"></li>
+                        <li id="guide-interface-li1"><b>Main Content Area:</b> This is where you'll interact with your data through different tabs.</li>
+                        <li id="guide-interface-li2"><b>Sidebar (Desktop View):</b> On larger screens, this panel automatically shows your upcoming available time slots for quick scheduling.</li>
+                        <li id="guide-interface-li3">Floating Button (Mobile/Tablet View):</b> On smaller screens, the sidebar is replaced by a floating calendar button (📅) in the bottom-right corner. Tapping this opens a pop-up with your available slots.</li>
                     </ul>
                     
-                    <h3 id="guide-dashboard-title"></h3>
-                    <p id="guide-dashboard-p1"></p>
+                    <h3 id="guide-dashboard-title">3. Managing Your Day: The Dashboard & Calendar</h3>
+                    <p id="guide-dashboard-p1"><b>The Dashboard Tab</b><br>This is your home screen, giving you a quick overview of what's important:</p>
                     <ul>
-                        <li id="guide-dashboard-li1"></li>
-                        <li id="guide-dashboard-li2"></li>
-                        <li id="guide-dashboard-li3"></li>
+                        <li id="guide-dashboard-li1"><b>Upcoming Appointments 📅:</b> Shows all your future STP and GMS appointments, sorted by the soonest first.</li>
+                        <li id="guide-dashboard-li2"><b>One-Click Copy Buttons:</b> Next to the title, you will find 'Copy STP List' and 'Copy GMS List'. Clicking these will copy a pre-formatted summary of your upcoming appointments for that category, ready to paste into WhatsApp or other messaging apps to update your upline.</li>
+                        <li id="guide-dashboard-li3"><b>Follow-up Needed 📞:</b> Lists all prospects currently in the 'Keep In Touch' (KIT) stage.</li>
                     </ul>
 
-                    <h3 id="guide-calendar-title"></h3>
-                    <p id="guide-calendar-p1"></p>
+                    <h3 id="guide-calendar-title">The Calendar Tab & Availability Planner</h3>
+                    <p id="guide-calendar-p1">This is your command center for time management.</p>
                     <div class="planner-legend" style="justify-content: flex-start; margin-left: 20px;">
                         <span class="legend-item"><span class="appointment-dot dot-stp"></span><span id="legend-stp-guide"></span></span>
                         <span class="legend-item"><span class="appointment-dot dot-gms"></span><span id="legend-gms-guide"></span></span>
                     </div>
-                    <p id="guide-calendar-p2"></p>
+                    <p id="guide-calendar-p2"><b>Daily Availability Planner:</b> Click on any day in the calendar to open the planner. In this pop-up, you can:</p>
                     <ul>
-                        <li id="guide-calendar-li1"></li>
-                        <li id="guide-calendar-li2"></li>
-                        <li id="guide-calendar-li3"></li>
+                        <li id="guide-calendar-li1"><b>View Confirmed Appointments:</b> See a list of who you're meeting that day.</li>
+                        <li id="guide-calendar-li2"><b>Set Your Free Time:</b> Click on the 30-minute time slots to mark them as available.</li>
+                        <li id="guide-calendar-li3"><b>Save:</b> Click "Save Availability". The times you marked will now appear in the sidebar or the floating button's pop-up.</li>
                     </ul>
 
-                    <h3 id="guide-prospects-title"></h3>
-                    <p><strong><span id="guide-prospects-p1"></span></strong></p>
+                    <h3 id="guide-prospects-title">4. Managing Your Prospects: The All Prospects Tab</h3>
+                    <p><strong><span id="guide-prospects-p1">Adding and Editing a Prospect:</span></strong></p>
                     <ul>
-                        <li id="guide-prospects-li1"></li>
-                        <li id="guide-prospects-li2"></li>
-                        <li id="guide-prospects-li3"></li>
+                        <li id="guide-prospects-li1">Click the ➕ Add New Prospect button in the header.</li>
+                        <li id="guide-prospects-li2">In the form, you can specify if the prospect belongs to "Myself" or "My Downline". If you select a downline, you can choose an existing one from a list or type a new name.</li>
+                        <li id="guide-prospects-li3">Fill in all details and click Save. The elegant date and time picker makes scheduling intuitive.</li>
                     </ul>
-                    <p><strong><span id="guide-prospects-p2"></span></strong></p>
+                    <p><strong><span id="guide-prospects-p2">Filtering and Sorting:</span></strong></p>
                     <ul>
-                        <li id="guide-prospects-li4"></li>
-                        <li id="guide-prospects-li5"></li>
+                        <li id="guide-prospects-li4"><b>View Toggles:</b> At the top, you can filter between "My Prospects", "Downline's", or "All".</li>
+                        <li id="guide-prospects-li5"><b>Search, Filter, and Sort:</b> Use the search bar to find someone by name, phone, or tag. Use the Status Filter dropdown to narrow the list by their current status (e.g., show only 'Joined' prospects). You can also sort the results by date, name, or status.</li>
                     </ul>
-                    <p><strong><span id="guide-prospects-p3"></span></strong></p>
+                    <p><strong><span id="guide-prospects-p3">Pagination:</span></strong> To keep the list clean and fast, prospects are shown on pages. Use the navigation controls at the bottom to move between pages.</p>
 
-                    <h3 id="guide-analytics-title"></h3>
-                    <p id="guide-analytics-p1"></p>
+                    <h3 id="guide-analytics-title">5. Tracking Your Progress: The Analytics Tab 📊</h3>
+                    <p id="guide-analytics-p1">This tab helps you measure your activity and your team's progress with visual data.</p>
                     <ul>
-                        <li id="guide-analytics-li1"></li>
+                        <li id="guide-analytics-li1"><b>View Toggles:</li>
                     </ul>
-                    <p><strong><span id="guide-analytics-p2"></span></strong></p>
+                    <p><strong><span id="guide-analytics-p2">Filters:</span></strong></p>
                     <ul>
-                        <li id="guide-analytics-li2"></li>
-                        <li id="guide-analytics-li3"></li>
+                        <li id="guide-analytics-li2">Use the clean, grid-style Month Picker to select the month you want to review.</li>
+                        <li id="guide-analytics-li3">When in 'Downline Support' view, you can use the Filter by Downline dropdown to see statistics for a specific downline or all of them combined.</li>
                     </ul>
-                    <p><strong><span id="guide-analytics-p3"></span></strong></p>
+                    <p><strong><span id="guide-analytics-p3">6-Month Performance Trend Chart:</span></strong> This interactive line chart visualizes your performance over the last six months for your four key metrics. Hover over any point to see details, and click the legend at the top to toggle lines on or off.</p>
                     
-                    <h3 id="guide-settings-title"></h3>
-                    <p id="guide-settings-p1"></p>
+                    <h3 id="guide-settings-title">6. Settings: Data Management & Syncing ⚙️</h3>
+                    <p id="guide-settings-p1">This is where you manage your application data.</p>
                     <ul>
-                        <li id="guide-settings-li1"></li>
+                        <li id="guide-settings-li1"><b>Data Status:</b> See at a glance when your data was last synced and the total number of prospects you have.</li>
                     </ul>
-                    <p><strong><span id="guide-settings-p2"></span></strong></p>
-                    <p><strong><span id="guide-settings-p3"></span></strong></p>
+                    <p><strong><span id="guide-settings-p2">Backup & Sync:</span></strong> This is the most important feature for keeping your data safe and synchronized across devices.</p>
+                    <p><strong><span id="guide-settings-p3">Danger Zone:</span></strong></p>
                     <ul>
-                        <li id="guide-settings-li2"></li>
+                        <li id="guide-settings-li2"><b>Clear All Data:</b> Use with caution! This will permanently delete all prospect records and availability data. This action cannot be undone.</li>
                     </ul>
                 </div>
             </div>
         </div>
         <div class="sidebar">
-            <h3 id="sidebar-title"></h3>
+            <h3 id="sidebar-title">Upcoming Available Slots</h3>
             <div id="available-slots-list"></div>
         </div>
     </div>
     
     <div id="prospect-modal" class="modal">
         <div class="modal-content">
-            <div class="modal-header"> <h2 id="modal-title"></h2> <span class="close-button" id="close-modal">&times;</span> </div>
+            <div class="modal-header"> <h2 id="modal-title">Add New Prospect</h2> <span class="close-button" id="close-modal">&times;</span> </div>
             <form id="prospect-form">
                 <input type="hidden" id="prospect-id">
                  <div class="form-group">
-                    <label id="owner-type-label"></label>
+                    <label id="owner-type-label">This prospect belongs to:</label>
                     <select id="owner-type">
-                        <option value="user" id="owner-user-option"></option>
-                        <option value="downline" id="owner-downline-option"></option>
+                        <option value="user" id="owner-user-option">Myself</option>
+                        <option value="downline" id="owner-downline-option">My Downline</option>
                     </select>
                 </div>
                 <div class="form-group" id="downline-name-group" style="display: none;">
-                    <label for="downline-name" id="downline-name-label"></label>
+                    <label for="downline-name" id="downline-name-label">Downline's Name:</label>
                     <input type="text" id="downline-name" list="downline-names-list">
                     <datalist id="downline-names-list"></datalist>
                 </div>
-                <div class="form-group"> <label for="name" id="labelName"></label> <input type="text" id="name" required> </div>
-                <div class="form-group"> <label for="phone" id="labelPhone"></label> <input type="text" id="phone"> </div>
-                <div class="form-group"> <label for="age" id="labelAge"></label> <input type="number" id="age"> </div>
-                <div class="form-group"> <label for="occupation" id="labelOccupation"></label> <input type="text" id="occupation"> </div>
-                <div class="form-group"> <label for="tags" id="labelTags"></label> <input type="text" id="tags"> </div>
+                <div class="form-group"> <label for="name" id="labelName">Name:</label> <input type="text" id="name" required> </div>
+                <div class="form-group"> <label for="phone" id="labelPhone">Phone:</label> <input type="text" id="phone"> </div>
+                <div class="form-group"> <label for="age" id="labelAge">Age:</label> <input type="number" id="age"> </div>
+                <div class="form-group"> <label for="occupation" id="labelOccupation">Occupation:</label> <input type="text" id="occupation"> </div>
+                <div class="form-group"> <label for="tags" id="labelTags">Tags (comma-separated):</label> <input type="text" id="tags"> </div>
                 <div class="form-group">
-                    <label for="stp-datetime" id="labelStpTime"></label>
+                    <label for="stp-datetime" id="labelStpTime">STP Appointment Time:</label>
                     <input type="text" id="stp-datetime" required>
                     <div id="stp-available-slots" class="available-slots-picker"></div>
                 </div>
-                <div class="form-group"> <label for="notes" id="labelNotes"></label> <textarea id="notes" rows="3"></textarea> </div>
-                <button type="submit" class="btn-success" id="save-prospect-btn"></button>
+                <div class="form-group"> <label for="notes" id="labelNotes">Notes:</label> <textarea id="notes" rows="3"></textarea> </div>
+                <button type="submit" class="btn-success" id="save-prospect-btn">Save</button>
             </form>
         </div>
     </div>
     <div id="action-modal" class="modal">
         <div class="modal-content">
-            <div class="modal-header"> <h2 id="action-modal-title"></h2> <span class="close-button" id="action-close-modal">&times;</span> </div>
+            <div class="modal-header"> <h2 id="action-modal-title">Update Prospect Status</h2> <span class="close-button" id="action-close-modal">&times;</span> </div>
             <form id="action-form">
                 <input type="hidden" id="action-prospect-id"> <input type="hidden" id="action-type">
                 <div class="form-group" id="gms-schedule-group" style="display:none;">
-                    <label for="gms-datetime" id="labelGmsTime"></label>
+                    <label for="gms-datetime" id="labelGmsTime">GMS Appointment Time:</label>
                     <input type="text" id="gms-datetime">
                     <div id="gms-available-slots" class="available-slots-picker"></div>
                 </div>
-                <div class="form-group"> <label for="action-notes" id="labelActionNotes"></label> <textarea id="action-notes" rows="4"></textarea> </div>
-                <button type="submit" class="btn-success" id="confirm-action-btn"></button>
+                <div class="form-group"> <label for="action-notes" id="labelActionNotes">Follow-up Notes (Optional):</label> <textarea id="action-notes" rows="4"></textarea> </div>
+                <button type="submit" class="btn-success" id="confirm-action-btn">Confirm</button>
             </form>
         </div>
     </div>
     <div id="planner-modal" class="modal">
         <div class="modal-content">
-            <div class="modal-header"> <h2 id="planner-title"></h2> <span class="close-button" id="close-planner-modal">&times;</span> </div>
+            <div class="modal-header"> <h2 id="planner-title">Daily Availability Planner</h2> <span class="close-button" id="close-planner-modal">&times;</span> </div>
             <div class="planner-container">
                 <div class="planner-appointments">
-                    <h3 id="planner-appointments-title"></h3>
+                    <h3 id="planner-appointments-title">Confirmed Appointments</h3>
                     <ul id="planner-appointments-list"></ul>
                 </div>
                 <div class="planner-timeline">
-                    <h3 id="planner-timeline-title"></h3>
+                    <h3 id="planner-timeline-title">Set Your Availability</h3>
                     <div class="planner-legend">
-                        <span class="legend-item"><span class="legend-color available"></span><span id="legend-available"></span></span>
-                        <span class="legend-item"><span class="legend-color booked"></span><span id="legend-booked"></span></span>
-                        <span class="legend-item"><span class="legend-color busy"></span><span id="legend-busy"></span></span>
+                        <span class="legend-item"><span class="legend-color available"></span><span id="legend-available">Available</span></span>
+                        <span class="legend-item"><span class="legend-color booked"></span><span id="legend-booked"></span>Booked</span>
+                        <span class="legend-item"><span class="legend-color busy"></span><span id="legend-busy"></span>Busy</span>
                     </div>
                     <div id="planner-timeline-slots"></div>
                 </div>
             </div>
             <div class="planner-footer">
-                <button class="btn-primary" id="save-availability-btn"></button>
+                <button class="btn-primary" id="save-availability-btn">Save Availability</button>
             </div>
         </div>
     </div>
     <div id="availability-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header"> 
-                <h2 id="availability-modal-title"></h2> 
+                <h2 id="availability-modal-title">Upcoming Available Slots</h2> 
                 <span class="close-button" id="close-availability-modal">&times;</span> 
             </div>
             <div id="modal-slots-list"></div>
@@ -2381,20 +2384,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const hasSeenWelcome = sessionStorage.getItem('hasSeenWelcome');
 
         if (user) {
+            // STEP 1: Run all the setup and rendering logic while the UI is hidden.
+            document.getElementById('user-email').textContent = user.email;
+            await startApp(); // This now runs before the UI is shown.
+
+            // STEP 2: Visually switch from the auth screen to the main app.
+            authContainer.style.display = 'none';
+            mainApp.style.display = ''; // Use the default display style from CSS.
+
+            // STEP 3: Hide the loading screen as the final step.
             if (!hasSeenWelcome) {
                 setTimeout(() => {
                     loadingScreen.classList.add('hidden');
                     sessionStorage.setItem('hasSeenWelcome', 'true');
-                }, 1500);
+                }, 1500); // Keep your welcome animation.
             } else {
-                loadingScreen.style.display = 'none';
+                loadingScreen.style.display = 'none'; // Hide immediately if already seen.
             }
-
-            authContainer.style.display = 'none';
-            mainApp.style.display = '';
-            document.getElementById('user-email').textContent = user.email;
-            await startApp();
         } else {
+            // This part handles the logged-out state and is correct.
             loadingScreen.style.display = 'none';
             authContainer.style.display = 'flex';
             mainApp.style.display = 'none';
