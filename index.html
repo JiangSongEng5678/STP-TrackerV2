@@ -2436,5 +2436,104 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 </script>
+
+<!-- Mobile-robust auth/UI toggle patch -->
+<script>
+(function(){
+  function hideLoading(){
+    var ls = document.getElementById('loading-screen');
+    if(ls){ ls.classList.add('hidden'); }
+  }
+  async function swapUIFromSession(){
+    try {
+      if(!window.supabase || !window.supabase.auth){ hideLoading(); return; }
+      const { data } = await window.supabase.auth.getSession();
+      const hasUser = !!(data && data.session && data.session.user);
+      var auth = document.getElementById('auth-container');
+      var app  = document.getElementById('main-app');
+      if(auth && app){
+        if(hasUser){
+          app.style.display = 'block';
+          auth.style.display = 'none';
+          try{
+            var ue = document.getElementById('user-email');
+            if(ue && data.session.user && data.session.user.email){
+              ue.textContent = data.session.user.email;
+            }
+          }catch(e){}
+        }else{
+          app.style.display = 'none';
+          auth.style.display = 'flex';
+        }
+      }
+    } catch(e) {
+      // ignore
+    }
+    hideLoading();
+  }
+  function eagerShowApp(){
+    var app = document.getElementById('main-app');
+    var auth = document.getElementById('auth-container');
+    if(app && auth){
+      app.style.display = 'block';
+      auth.style.display = 'none';
+    }
+    hideLoading();
+  }
+  // Ensure tabs work even if other script fails to bind
+  document.addEventListener('click', function(ev){
+    var t = ev.target;
+    if(t && t.matches && t.matches('.tab-button')){
+      document.querySelectorAll('.tab-button').forEach(function(b){ b.classList.remove('active'); });
+      document.querySelectorAll('.tab-content').forEach(function(c){ c.classList.remove('active'); });
+      t.classList.add('active');
+      var id = t.getAttribute('data-tab');
+      var pane = document.getElementById(id);
+      if(pane){ pane.classList.add('active'); }
+    }
+  });
+  // Hook auth clicks to force-ensure UI
+  document.addEventListener('click', function(e){
+    if(e.target && e.target.id === 'auth-action-btn'){
+      // after password login attempt, re-check
+      setTimeout(swapUIFromSession, 800);
+      setTimeout(eagerShowApp, 1400);
+    }
+    if(e.target && e.target.id === 'logout-btn'){
+      setTimeout(swapUIFromSession, 500);
+    }
+  });
+  // Password show/hide
+  document.addEventListener('click', function(e){
+    if(e.target && e.target.id === 'password-toggle'){
+      var input = document.getElementById('auth-password');
+      if(input){ input.type = (input.type === 'password') ? 'text' : 'password'; }
+    }
+  });
+  // Google OAuth: after redirect, pageshow will fire
+  window.addEventListener('pageshow', swapUIFromSession);
+  // Supabase auth listener: the most reliable source of truth
+  function attachAuthListener(){
+    try{
+      if(window.supabase && window.supabase.auth){
+        window.supabase.auth.onAuthStateChange(function(event, session){
+          if(event === 'SIGNED_IN'){ eagerShowApp(); }
+          if(event === 'SIGNED_OUT'){ swapUIFromSession(); }
+        });
+      }
+    }catch(e){}
+  }
+  if(document.readyState === 'complete' || document.readyState === 'interactive'){
+    attachAuthListener();
+    swapUIFromSession();
+  }else{
+    document.addEventListener('DOMContentLoaded', function(){
+      attachAuthListener();
+      swapUIFromSession();
+    });
+  }
+})();
+</script>
+
 </body>
 </html>
