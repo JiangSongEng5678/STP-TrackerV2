@@ -189,109 +189,24 @@
         .page-btn:not(:disabled):hover { background-color: var(--secondary-color); }
         .dashboard-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         
-        /* --- START: New Login Page & Modal Styles --- */
-        #auth-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: calc(100vh - 40px);
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        .login-card {
-            background: var(--card-bg);
-            padding: 40px;
-            border-radius: var(--border-radius);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 420px;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            animation: fadeIn 0.5s ease-out;
-        }
-        .login-logo {
-            max-width: 100px;
-            margin: 0 auto 20px;
-        }
-        .login-card h2 {
-            margin-top: 0;
-            margin-bottom: 10px;
-            font-size: 1.8em;
-            font-weight: 700;
-            color: var(--primary-color);
-        }
-        .login-card p {
-            margin-bottom: 30px;
-            color: var(--text-color-light);
-        }
-        .auth-form-group {
-            position: relative;
-            margin-bottom: 20px;
-        }
-        .auth-form-group input {
-            width: 100%;
-            padding: 12px 12px 12px 45px; /* Add padding for icon */
-            border-radius: var(--border-radius);
-            border: 1px solid var(--border-color);
-            box-sizing: border-box;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            font-size: 1em;
-        }
-        .auth-form-group input:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.1);
-            outline: none;
-        }
-        .auth-form-group .icon {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #9ca3af;
-            pointer-events: none;
-        }
-         .auth-form-group .password-toggle {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #9ca3af;
-            cursor: pointer;
-        }
-        .login-actions button {
-            width: 100%;
-            padding: 12px 20px;
-            font-size: 1.1em;
-        }
-        .auth-toggle-link {
-            color: var(--primary-color);
-            text-decoration: none;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .auth-toggle-link:hover {
-            text-decoration: underline;
-        }
-        .auth-footer {
-            margin-top: 20px;
-            font-size: 0.9em;
-            color: var(--text-color-light);
-        }
-        .forgot-password-link {
-            display: block;
-            margin-top: 15px;
-            color: var(--primary-color);
-            text-decoration: none;
-            font-size: 0.9em;
-            transition: color 0.2s;
-        }
-        .forgot-password-link:hover {
-            text-decoration: underline;
-            color: #0b3a8a;
-        }
-        /* --- END: New Login Page & Modal Styles --- */
+        /* --- START: Login Page Styles --- */
+        #auth-container { display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 40px); padding: 20px; box-sizing: border-box; }
+        .login-card { background: var(--card-bg); padding: 40px; border-radius: var(--border-radius); box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 420px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); animation: fadeIn 0.5s ease-out; }
+        .login-logo { max-width: 100px; margin: 0 auto 20px; }
+        .login-card h2 { margin-top: 0; margin-bottom: 10px; font-size: 1.8em; font-weight: 700; color: var(--primary-color); }
+        .login-card p { margin-bottom: 30px; color: var(--text-color-light); }
+        .auth-form-group { position: relative; margin-bottom: 20px; }
+        .auth-form-group input { width: 100%; padding: 12px 12px 12px 45px; border-radius: var(--border-radius); border: 1px solid var(--border-color); box-sizing: border-box; transition: border-color 0.2s, box-shadow 0.2s; font-size: 1em; }
+        .auth-form-group input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.1); outline: none; }
+        .auth-form-group .icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #9ca3af; pointer-events: none; }
+         .auth-form-group .password-toggle { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #9ca3af; cursor: pointer; }
+        .login-actions button { width: 100%; padding: 12px 20px; font-size: 1.1em; }
+        .auth-toggle-link { color: var(--primary-color); text-decoration: none; cursor: pointer; font-weight: 600; }
+        .auth-toggle-link:hover { text-decoration: underline; }
+        .auth-footer { margin-top: 20px; font-size: 0.9em; color: var(--text-color-light); }
+        .forgot-password-link { display: block; margin-top: 15px; color: var(--primary-color); text-decoration: none; font-size: 0.9em; transition: color 0.2s; }
+        .forgot-password-link:hover { text-decoration: underline; color: #0b3a8a; }
+        /* --- END: Login Page Styles --- */
 
         /* ===== Flatpickr Custom Theme ===== */
         .flatpickr-calendar { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius); box-shadow: var(--box-shadow); width: 315px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -318,61 +233,34 @@
         .flatpickr-monthSelect-month:hover { background-color: var(--secondary-color); color: var(--primary-color); }
         .flatpickr-monthSelect-month.selected { background-color: var(--primary-color); color: var(--light-text-color); }
 
-        /* ======================================================= */
-        /* START: HOVER EFFECT ENHANCEMENTS                      */
-        /* ======================================================= */
-
-        /* 1. Add a subtle 'lift' effect to Dashboard cards */
-        .reminder-card, .appointment-card {
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-        }
-
-        .reminder-card:hover, .appointment-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 16px rgba(30, 41, 59, 0.1);
-        }
-
-        /* 2. Enhance the main navigation tabs on hover */
-        .tab-button:hover {
-            transform: translateY(-2px);
-            background-color: rgba(0,0,0,0.02);
-        }
-
-        /* 3. Make calendar days pop out when hovered */
-        .calendar-day {
-            /* Add transform and box-shadow to the existing transition */
-            transition: background-color 0.2s, transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-        }
-
-        .calendar-day:not(.other-month):hover {
-            transform: translateY(-3px);
-            box-shadow: var(--box-shadow);
-            cursor: pointer;
-        }
+        /* --- Hover Effect Enhancements --- */
+        .reminder-card, .appointment-card { transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
+        .reminder-card:hover, .appointment-card:hover { transform: translateY(-3px); box-shadow: 0 8px 16px rgba(30, 41, 59, 0.1); }
+        .tab-button:hover { transform: translateY(-2px); background-color: rgba(0,0,0,0.02); }
+        .calendar-day { transition: background-color 0.2s, transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
+        .calendar-day:not(.other-month):hover { transform: translateY(-3px); box-shadow: var(--box-shadow); cursor: pointer; }
         
-        /* --- Recurring Availability --- */
-        .recurring-day { display: grid; grid-template-columns: 100px 1fr; gap: 10px; align-items: center; margin-bottom: 10px; }
-        .recurring-day label { font-weight: 600; }
-        .recurring-slots { display: flex; flex-wrap: wrap; gap: 5px; }
-        .slot-chip { background: #e9ecef; padding: 5px 10px; border-radius: 15px; font-size: 0.8em; cursor: pointer; }
-        .slot-chip.selected { background: var(--primary-color); color: white; }
+        /* --- START: NEW Recurring Availability Styles --- */
+        .recurring-day-accordion { border: 1px solid var(--border-color); border-radius: var(--border-radius); margin-bottom: 10px; overflow: hidden; }
+        .accordion-header { background-color: var(--secondary-color); padding: 12px 15px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.2s; }
+        .accordion-header:hover { background-color: #e2e8f0; }
+        .accordion-header::after { content: '▼'; font-size: 0.8em; transition: transform 0.3s ease; }
+        .accordion-header.active::after { transform: rotate(180deg); }
+        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; background-color: #fff; padding: 0 15px; }
+        .accordion-content.open { max-height: 500px; padding: 15px 15px; }
+        .time-block { margin-bottom: 15px; }
+        .time-block-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
+        .time-block-header h4 { margin: 0; font-size: 0.9em; color: var(--text-color-light); }
+        .select-all-btn { background: none; border: 1px solid var(--primary-color); color: var(--primary-color); padding: 3px 8px; font-size: 0.8em; font-weight: normal; border-radius: 6px; }
+        .time-block-slots { display: flex; flex-wrap: wrap; gap: 8px; }
+        .slot-chip { background: #e9ecef; padding: 6px 12px; border-radius: 15px; font-size: 0.85em; cursor: pointer; transition: background-color 0.2s, color 0.2s; border: 1px solid transparent; }
+        .slot-chip.selected { background: var(--primary-color); color: white; border-color: var(--primary-color); }
+        /* --- END: NEW Recurring Availability Styles --- */
         
         /* --- Available Slots Picker --- */
         .available-slots-picker { margin-top: 10px; max-height: 150px; overflow-y: auto; padding: 5px; border: 1px solid var(--border-color); border-radius: 8px; }
         .slot-picker-btn { display: inline-block; width: auto; margin: 3px; padding: 6px 12px; font-size: 0.9em; background-color: var(--secondary-color); border: 1px solid var(--border-color); }
         .slot-picker-btn:hover { background-color: var(--primary-color); color: white; }
-        
-        /* --- Tag Manager --- */
-        #tag-manager-list { list-style: none; padding: 0; }
-        .tag-manager-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-        .tag-manager-item .tag-color { width: 20px; height: 20px; border-radius: 50%; }
-        .tag-manager-item .tag-name { flex-grow: 1; }
-        .tag-manager-item .delete-tag-btn { font-size: 1.2em; color: var(--danger-color); }
-        #add-tag-form { display: flex; gap: 10px; margin-top: 15px; }
-
-        /* ======================================================= */
-        /* END: HOVER EFFECT ENHANCEMENTS                        */
-        /* ======================================================= */
 
         /* Tablet Responsive Styles */
         @media (max-width: 992px) { 
@@ -393,56 +281,14 @@
             .tab-button { flex-grow: 0; flex-shrink: 0; }
             .prospect-meta { flex-direction: column; gap: 5px; align-items: flex-start; }
             .prospect-meta .separator { display: none; }
-
-            .dashboard-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 15px;
-                margin-bottom: 20px;
-            }
-
-            .dashboard-header .controls {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                width: 100%;
-            }
-
-            /* MOBILE REFINEMENT: Filter Controls */
-            .filter-controls {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 10px;
-            }
-
-            .filter-controls .search-bar {
-                grid-column: 1 / -1;
-            }
-            
-            /* MOBILE REFINEMENT: Login Card */
-            .login-card { 
-                padding: 25px; 
-            }
-
-            /* MOBILE REFINEMENT: Header Buttons */
-            header .controls .btn-success {
-                padding: 10px 15px;
-                font-size: 0.9em;
-            }
-
-            /* MOBILE REFINEMENT: Prospect Card Header */
-            .prospect-card .card-header h3 {
-                display: flex;
-                flex-wrap: wrap;
-                align-items: center;
-                gap: 8px;
-                line-height: 1.4;
-            }
-
-            /* MOBILE REFINEMENT: Prospect Action Buttons */
-            .prospect-actions {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            }
+            .dashboard-header { flex-direction: column; align-items: flex-start; gap: 15px; margin-bottom: 20px; }
+            .dashboard-header .controls { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+            .filter-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+            .filter-controls .search-bar { grid-column: 1 / -1; }
+            .login-card { padding: 25px; }
+            header .controls .btn-success { padding: 10px 15px; font-size: 0.9em; }
+            .prospect-card .card-header h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; line-height: 1.4; }
+            .prospect-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
         }
     </style>
 </head>
@@ -571,17 +417,6 @@
                         <button id="save-recurring-btn" class="btn-primary" style="margin-top: 15px;"></button>
                     </div>
                     
-                    <div class="settings-card" style="border-left-color: #6d28d9; margin-top: 20px;">
-                        <h3 id="tagManagementTitle"></h3>
-                        <p id="tagManagementDesc"></p>
-                        <ul id="tag-manager-list"></ul>
-                        <form id="add-tag-form">
-                            <input type="text" id="new-tag-name" placeholder="New tag name" required style="flex-grow: 1;">
-                            <input type="color" id="new-tag-color" value="#e9ecef">
-                            <button type="submit" class="btn-success">+</button>
-                        </form>
-                    </div>
-
                     <div class="settings-card" style="border-left-color: var(--primary-color); margin-top: 20px;">
                         <h3 id="backupSyncTitle"></h3>
                         <p id="backupSyncDesc"></p>
@@ -837,7 +672,6 @@ document.addEventListener('DOMContentLoaded', () => {
             prospectViewToggleMine: "我的对象", prospectViewToggleDownlines: "下线对象", prospectViewToggleAll: "全部",
             analyticsViewToggleMine: "我的分析", analyticsViewToggleDownlines: "下线支持分析", downlineFilterLabel: "筛选下线:", allDownlinesOption: "所有下线",
             errorDoubleBooking: "此时间段已被预约，请选择其他时间。", errorDownlineNameRequired: "请输入下线名字。",
-            // --- NEW TRANSLATION ---
             errorGmsAfterStp: "GMS 时间必须在 STP 时间之后。",
             confirmJoin: "确定要将对象标记为“已加入”吗？", confirmDisqualify: "确定要将此对象标记为“不合适”吗？", confirmNotJoining: "确定要将此对象标记为“不加入”吗？",
             STP: "已邀约STP", GMS_Appointment: "已邀约GMS", KIT_STP: "跟进中 (STP后)", KIT_GMS: "跟进中 (GMS后)", Joined: "已加入", Disqualified: "不合适", Not_Joining: "不加入",
@@ -896,8 +730,7 @@ document.addEventListener('DOMContentLoaded', () => {
             recurringAvailabilityTitle: "设置每周重复可用时间",
             recurringAvailabilityDesc: "在这里设置您每周固定的可用时间。这些时间将自动应用到未来的日期。",
             saveRecurringBtn: "保存重复时间",
-            tagManagementTitle: "标签管理",
-            tagManagementDesc: "创建、编辑和删除您的自定义标签以进行更好的分类。"
+            selectAll: "全选"
         },
         'en': {
             tabCalendar: "Calendar", appTitle: "Amway Prospect Tracker💎", addProspectBtn: "➕ Add New Prospect", tabDashboard: "Dashboard", tabAllProspects: "All Prospects", tabAnalytics: "Analytics", tabSettings: "Settings", tabGuide: "Guide",
@@ -919,7 +752,6 @@ document.addEventListener('DOMContentLoaded', () => {
             prospectViewToggleMine: "My Prospects", prospectViewToggleDownlines: "Downline's", prospectViewToggleAll: "All",
             analyticsViewToggleMine: "My Analytics", analyticsViewToggleDownlines: "Downline Support", downlineFilterLabel: "Filter by Downline:", allDownlinesOption: "All Downlines",
             errorDoubleBooking: "This time slot is already booked. Please choose another time.", errorDownlineNameRequired: "Please enter the downline's name.",
-            // --- NEW TRANSLATION ---
             errorGmsAfterStp: "GMS time must be after the STP time.",
             confirmJoin: "Are you sure you want to mark this prospect as 'Joined'?", confirmDisqualify: "Are you sure you want to mark this prospect as 'Disqualified'?", confirmNotJoining: "Are you sure you want to mark this prospect as 'Not Joining'?",
             STP: "STP Scheduled", GMS_Appointment: "GMS Scheduled", KIT_STP: "Keep In Touch (Post-STP)", KIT_GMS: "Keep In Touch (Post-GMS)", Joined: "Joined",
@@ -979,8 +811,7 @@ document.addEventListener('DOMContentLoaded', () => {
             recurringAvailabilityTitle: "Set Recurring Weekly Availability",
             recurringAvailabilityDesc: "Set your fixed weekly schedule here. These slots will be automatically applied to future dates.",
             saveRecurringBtn: "Save Recurring Slots",
-            tagManagementTitle: "Tag Management",
-            tagManagementDesc: "Create, edit, and delete your custom tags for better organization."
+            selectAll: "Select All"
         }
     };
     let currentLang = 'zh-CN';
@@ -988,7 +819,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let prospects = [];
     let availability = {};
     let recurringAvailability = {};
-    let customTags = [];
     let prospectViewFilter = 'user'; 
     let analyticsView = 'user'; 
     let lastSyncTimestamp = null;
@@ -1062,60 +892,21 @@ document.addEventListener('DOMContentLoaded', () => {
             'owner-type-label': t.ownerTypeLabel, 'owner-user-option': t.ownerUserOption, 'owner-downline-option': t.ownerDownlineOption,
             'downline-name-label': t.downlineNameLabel, 'downline-filter-label': t.downlineFilterLabel,
             
-            'guide-main-title': t.guideMainTitle, 
-            'guide-getting-started-title': t.guideGettingStartedTitle, 
-            'guide-getting-started-p1': t.guideGettingStartedP1,
-            'guide-getting-started-p2': t.guideGettingStartedP2,
-            'guide-getting-started-li1': t.guideGettingStartedLi1,
-            'guide-getting-started-li2': t.guideGettingStartedLi2,
-            'guide-getting-started-li3': t.guideGettingStartedLi3,
-
-            'guide-interface-title': t.guideInterfaceTitle, 
-            'guide-interface-p1': t.guideInterfaceP1,
-            'guide-interface-li1': t.guideInterfaceLi1,
-            'guide-interface-li2': t.guideInterfaceLi2,
-            'guide-interface-li3': t.guideInterfaceLi3,
-
-            'guide-dashboard-title': t.guideDashboardTitle,
-            'guide-dashboard-p1': t.guideDashboardP1,
-            'guide-dashboard-li1': t.guideDashboardLi1,
-            'guide-dashboard-li2': t.guideDashboardLi2,
-            'guide-dashboard-li3': t.guideDashboardLi3,
-
-            'guide-calendar-title': t.guideCalendarTitle,
-            'guide-calendar-p1': t.guideCalendarP1,
-            'guide-calendar-p2': t.guideCalendarP2,
-            'legend-stp-guide': t.legendStp, 'legend-gms-guide': t.legendGms, 
+            'guide-main-title': t.guideMainTitle, 'guide-getting-started-title': t.guideGettingStartedTitle, 'guide-getting-started-p1': t.guideGettingStartedP1,
+            'guide-getting-started-p2': t.guideGettingStartedP2, 'guide-getting-started-li1': t.guideGettingStartedLi1, 'guide-getting-started-li2': t.guideGettingStartedLi2, 'guide-getting-started-li3': t.guideGettingStartedLi3,
+            'guide-interface-title': t.guideInterfaceTitle, 'guide-interface-p1': t.guideInterfaceP1, 'guide-interface-li1': t.guideInterfaceLi1, 'guide-interface-li2': t.guideInterfaceLi2, 'guide-interface-li3': t.guideInterfaceLi3,
+            'guide-dashboard-title': t.guideDashboardTitle, 'guide-dashboard-p1': t.guideDashboardP1, 'guide-dashboard-li1': t.guideDashboardLi1, 'guide-dashboard-li2': t.guideDashboardLi2, 'guide-dashboard-li3': t.guideDashboardLi3,
+            'guide-calendar-title': t.guideCalendarTitle, 'guide-calendar-p1': t.guideCalendarP1, 'guide-calendar-p2': t.guideCalendarP2, 'legend-stp-guide': t.legendStp, 'legend-gms-guide': t.legendGms, 
             'guide-calendar-li1':t.guideCalendarLi1, 'guide-calendar-li2':t.guideCalendarLi2, 'guide-calendar-li3':t.guideCalendarLi3,
-
-            'guide-prospects-title': t.guideProspectsTitle, 
-            'guide-prospects-p1': t.guideProspectsP1,
-            'guide-prospects-li1': t.guideProspectsLi1,
-            'guide-prospects-li2': t.guideProspectsLi2,
-            'guide-prospects-li3': t.guideProspectsLi3,
-            'guide-prospects-p2': t.guideProspectsP2,
-            'guide-prospects-li4': t.guideProspectsLi4,
-            'guide-prospects-li5': t.guideProspectsLi5,
-            'guide-prospects-p3': t.guideProspectsP3,
-
-            'guide-analytics-title': t.guideAnalyticsTitle,
-            'guide-analytics-p1': t.guideAnalyticsP1,
-            'guide-analytics-li1': t.guideAnalyticsLi1,
-            'guide-analytics-p2': t.guideAnalyticsP2,
-            'guide-analytics-li2': t.guideAnalyticsLi2,
-            'guide-analytics-li3': t.guideAnalyticsLi3,
-            'guide-analytics-p3': t.guideAnalyticsP3,
-
-            'guide-settings-title': t.guideSettingsTitle,
-            'guide-settings-p1': t.guideSettingsP1,
-            'guide-settings-li1': t.guideSettingsLi1,
-            'guide-settings-p2': t.guideSettingsP2,
-            'guide-settings-p3': t.guideSettingsP3,
-            'guide-settings-li2': t.guideSettingsLi2,
-
+            'guide-prospects-title': t.guideProspectsTitle, 'guide-prospects-p1': t.guideProspectsP1, 'guide-prospects-li1': t.guideProspectsLi1,
+            'guide-prospects-li2': t.guideProspectsLi2, 'guide-prospects-li3': t.guideProspectsLi3, 'guide-prospects-p2': t.guideProspectsP2,
+            'guide-prospects-li4': t.guideProspectsLi4, 'guide-prospects-li5': t.guideProspectsLi5, 'guide-prospects-p3': t.guideProspectsP3,
+            'guide-analytics-title': t.guideAnalyticsTitle, 'guide-analytics-p1': t.guideAnalyticsP1, 'guide-analytics-li1': t.guideAnalyticsLi1,
+            'guide-analytics-p2': t.guideAnalyticsP2, 'guide-analytics-li2': t.guideAnalyticsLi2, 'guide-analytics-li3': t.guideAnalyticsLi3, 'guide-analytics-p3': t.guideAnalyticsP3,
+            'guide-settings-title': t.guideSettingsTitle, 'guide-settings-p1': t.guideSettingsP1, 'guide-settings-li1': t.guideSettingsLi1,
+            'guide-settings-p2': t.guideSettingsP2, 'guide-settings-p3': t.guideSettingsP3, 'guide-settings-li2': t.guideSettingsLi2,
             'analytics-trend-title': t.analyticsTrendTitle, 'copy-stp-btn': t.copyStpBtn, 'copy-gms-btn': t.copyGmsBtn, 'welcome-text': t.welcome,
-            'recurringAvailabilityTitle': t.recurringAvailabilityTitle, 'recurringAvailabilityDesc': t.recurringAvailabilityDesc, 'save-recurring-btn': t.saveRecurringBtn,
-            'tagManagementTitle': t.tagManagementTitle, 'tagManagementDesc': t.tagManagementDesc
+            'recurringAvailabilityTitle': t.recurringAvailabilityTitle, 'recurringAvailabilityDesc': t.recurringAvailabilityDesc, 'save-recurring-btn': t.saveRecurringBtn
         };
         for (const id in elements) { 
             const el = document.getElementById(id);
@@ -1155,10 +946,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if(settingsData) {
             recurringAvailability = settingsData.recurring_availability || {};
-            customTags = settingsData.custom_tags || [];
         } else {
             recurringAvailability = {};
-            customTags = [];
         }
         
         populateDownlineDatalist();
@@ -1172,7 +961,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderAvailableSlotsSidebar(); 
         renderToggles(); 
         renderDataStatus();
-        renderTagManager();
         renderRecurringAvailabilityForm();
     }
     
@@ -1319,17 +1107,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const updatedStatusHistory = p.status_history || [];
         const gmsTimeValue = document.getElementById('gms-datetime').value;
 
-        // --- NEW VALIDATION LOGIC ---
         if (action === 'schedule_gms' || action === 'edit_gms') {
             const newGmsTime = new Date(gmsTimeValue);
             const stpTime = new Date(p.stp_time);
             if (newGmsTime <= stpTime) {
                 alert(translations[currentLang].errorGmsAfterStp);
-                return; // Stop execution
+                return; 
             }
             if (isTimeSlotBooked(gmsTimeValue, p.id)) {
                 alert(translations[currentLang].errorDoubleBooking);
-                return; // Stop execution
+                return; 
             }
         }
         
@@ -1684,12 +1471,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = document.createElement('div'); card.className = 'prospect-card'; const statusText = translations[currentLang][pStatus] || pStatus;
             let kitInfo = pStatus.startsWith('KIT_') ? ` (${translations[currentLang].kitCounter}: ${p.kit_counter || 0})` : '';
             let tagsHtml = p.tags && p.tags.length ? `<div class="tags-container">${p.tags.map(tag => {
-                const customTag = customTags.find(ct => ct.name === tag);
                 const kitMatch = tag.match(/^KIT: (\d+)$/);
                 let style = '';
-                if(customTag) {
-                    style = `background-color: ${customTag.color}; color: ${isColorDark(customTag.color) ? 'white' : 'black'};`;
-                } else if(kitMatch) {
+                if(kitMatch) {
                     style = `background-color: var(--warning-color); color: var(--text-color);`;
                 }
                 return `<span class="tag-badge" style="${style}">${tag}</span>`
@@ -1989,7 +1773,6 @@ document.addEventListener('DOMContentLoaded', () => {
             prospects: prospects,
             availability: availability,
             recurringAvailability: recurringAvailability,
-            customTags: customTags,
             timestamp: timestamp.toISOString()
         };
         const dataStr = JSON.stringify(dataToExport, null, 2);
@@ -2027,8 +1810,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         const settingsPayload = {
                             user_id: user.id,
-                            recurring_availability: data.recurringAvailability || {},
-                            custom_tags: data.customTags || []
+                            recurring_availability: data.recurringAvailability || {}
                         };
                         await supabase.from('user_settings').upsert(settingsPayload, { onConflict: 'user_id' });
 
@@ -2276,34 +2058,77 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // --- START: NEW FEATURE FUNCTIONS ---
+    // --- START: Recurring Availability Redesign ---
     function renderRecurringAvailabilityForm() {
         const form = document.getElementById('recurring-availability-form');
         form.innerHTML = '';
         const t = translations[currentLang];
-        const dayNames = currentLang === 'zh-CN' ? ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'] : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const dayNames = currentLang === 'zh-CN' 
+            ? ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'] 
+            : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        
+        const timeBlocks = {
+            morning: { start: 5, end: 12, label: t.guidePeriodZaoshang || "Morning" },
+            afternoon: { start: 12, end: 18, label: t.guidePeriodXiawu || "Afternoon" },
+            evening: { start: 18, end: 24, label: t.guidePeriodWanshang || "Evening" }
+        };
 
         for (let day = 0; day < 7; day++) {
-            const dayContainer = document.createElement('div');
-            dayContainer.className = 'recurring-day';
-            let slotsHtml = '';
-            for (let hour = 0; hour < 24; hour++) {
-                for (let min = 0; min < 60; min += 30) {
-                    const timeStr = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
-                    const tempDate = new Date(2000, 0, 1, hour, min);
-                    const displayTime = (currentLang === 'zh-CN') ? formatChineseTime(tempDate) : tempDate.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true});
-                    const isSelected = recurringAvailability[day] && recurringAvailability[day].includes(timeStr);
-                    slotsHtml += `<span class="slot-chip ${isSelected ? 'selected' : ''}" data-day="${day}" data-time="${timeStr}">${displayTime}</span>`;
+            const dayAccordion = document.createElement('div');
+            dayAccordion.className = 'recurring-day-accordion';
+            
+            let dayHtml = `<div class="accordion-header" data-day="${day}">${dayNames[day]}</div>
+                           <div class="accordion-content" id="content-day-${day}">`;
+
+            for (const blockKey in timeBlocks) {
+                const block = timeBlocks[blockKey];
+                dayHtml += `<div class="time-block" id="block-${day}-${blockKey}">
+                                <div class="time-block-header">
+                                    <h4>${block.label}</h4>
+                                    <button type="button" class="select-all-btn" data-day="${day}" data-block="${blockKey}">${t.selectAll || 'Select All'}</button>
+                                </div>
+                                <div class="time-block-slots">`;
+
+                for (let hour = block.start; hour < block.end; hour++) {
+                    for (let min = 0; min < 60; min += 30) {
+                        const timeStr = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+                        const tempDate = new Date(2000, 0, 1, hour, min);
+                        const displayTime = (currentLang === 'zh-CN') 
+                            ? formatChineseTime(tempDate) 
+                            : tempDate.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true});
+                        const isSelected = recurringAvailability[day] && recurringAvailability[day].includes(timeStr);
+                        dayHtml += `<span class="slot-chip ${isSelected ? 'selected' : ''}" data-day="${day}" data-time="${timeStr}">${displayTime}</span>`;
+                    }
                 }
+                dayHtml += `</div></div>`;
             }
-            dayContainer.innerHTML = `<label>${dayNames[day]}</label><div class="recurring-slots">${slotsHtml}</div>`;
-            form.appendChild(dayContainer);
+            dayHtml += `</div>`;
+            dayAccordion.innerHTML = dayHtml;
+            form.appendChild(dayAccordion);
         }
     }
 
     document.getElementById('recurring-availability-form').addEventListener('click', e => {
         if (e.target.classList.contains('slot-chip')) {
             e.target.classList.toggle('selected');
+        }
+        if (e.target.classList.contains('accordion-header')) {
+            const content = e.target.nextElementSibling;
+            e.target.classList.toggle('active');
+            content.classList.toggle('open');
+        }
+        if (e.target.classList.contains('select-all-btn')) {
+            const day = e.target.dataset.day;
+            const blockKey = e.target.dataset.block;
+            const slotsInBlock = document.querySelectorAll(`#block-${day}-${blockKey} .slot-chip`);
+            const areAllSelected = Array.from(slotsInBlock).every(slot => slot.classList.contains('selected'));
+            slotsInBlock.forEach(slot => {
+                if (areAllSelected) {
+                    slot.classList.remove('selected');
+                } else {
+                    slot.classList.add('selected');
+                }
+            });
         }
     });
 
@@ -2312,9 +2137,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.slot-chip.selected').forEach(chip => {
             const day = chip.dataset.day;
             const time = chip.dataset.time;
-            if (!newRecurring[day]) {
-                newRecurring[day] = [];
-            }
+            if (!newRecurring[day]) newRecurring[day] = [];
             newRecurring[day].push(time);
         });
         recurringAvailability = newRecurring;
@@ -2325,6 +2148,7 @@ document.addEventListener('DOMContentLoaded', () => {
         alert('Recurring availability saved!');
         await renderAll();
     });
+    // --- END: Recurring Availability Redesign ---
     
     function getAllAvailableSlots() {
         const now = new Date();
@@ -2393,72 +2217,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    function isColorDark(hexColor) {
-        const color = (hexColor.charAt(0) === '#') ? hexColor.substring(1, 7) : hexColor;
-        const r = parseInt(color.substring(0, 2), 16);
-        const g = parseInt(color.substring(2, 4), 16);
-        const b = parseInt(color.substring(4, 6), 16);
-        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-        return luminance < 0.5;
-    }
-
-    function renderTagManager() {
-        const list = document.getElementById('tag-manager-list');
-        list.innerHTML = '';
-        customTags.forEach(tag => {
-            const li = document.createElement('li');
-            li.className = 'tag-manager-item';
-            li.innerHTML = `
-                <span class="tag-color" style="background-color: ${tag.color};"></span>
-                <span class="tag-name">${tag.name}</span>
-                <button class="delete-tag-btn" data-name="${tag.name}">&times;</button>
-            `;
-            list.appendChild(li);
-        });
-    }
-
-    document.getElementById('add-tag-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const nameInput = document.getElementById('new-tag-name');
-        const colorInput = document.getElementById('new-tag-color');
-        const newName = nameInput.value.trim();
-        if (newName && !customTags.some(t => t.name.toLowerCase() === newName.toLowerCase())) {
-            customTags.push({ name: newName, color: colorInput.value });
-            await saveCustomTags();
-            nameInput.value = '';
-            colorInput.value = '#e9ecef';
-            renderTagManager();
-        } else {
-            alert('Tag name cannot be empty or already exists.');
-        }
-    });
-
-    document.getElementById('tag-manager-list').addEventListener('click', async (e) => {
-        if (e.target.classList.contains('delete-tag-btn')) {
-            const tagName = e.target.dataset.name;
-            if (confirm(`Are you sure you want to delete the tag "${tagName}"? It will be removed from all prospects.`)) {
-                customTags = customTags.filter(t => t.name !== tagName);
-                await saveCustomTags();
-                
-                // Remove tag from all prospects
-                const updates = prospects.filter(p => p.tags && p.tags.includes(tagName)).map(p => {
-                    const updatedTags = p.tags.filter(t => t !== tagName);
-                    return supabase.from('prospects').update({ tags: updatedTags }).eq('id', p.id);
-                });
-                await Promise.all(updates);
-
-                await renderAll();
-            }
-        }
-    });
-    
-    async function saveCustomTags() {
-        const { data: { user } } = await supabase.auth.getUser();
-        await supabase.from('user_settings').upsert({ user_id: user.id, custom_tags: customTags }, { onConflict: 'user_id' });
-    }
-    
-    // --- END: NEW FEATURE FUNCTIONS ---
-
     // =======================================================
     // START: APP INITIALIZATION LOGIC
     // =======================================================
@@ -2472,7 +2230,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const { error: deleteError } = await supabase.from('availability').delete().lt('date', todayDateString);
         if(deleteError) console.error("Error cleaning past dates:", deleteError);
 
-        // FIX: Use .maybeSingle() to avoid 406 error
         const { data: todayData, error: fetchError } = await supabase
             .from('availability')
             .select('*')
