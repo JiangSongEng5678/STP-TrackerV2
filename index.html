@@ -2262,44 +2262,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     async function startApp() {
-        try { // <-- ADD THIS
-            const preferredLanguage = localStorage.getItem('preferredLanguage') || 'zh-CN';
-            setLanguage(preferredLanguage);
+        const preferredLanguage = localStorage.getItem('preferredLanguage') || 'zh-CN';
+        setLanguage(preferredLanguage);
 
-            try {
-                const now = new Date();
-                analyticsPicker.setDate(now, true);
-            } catch (error) {
-                console.error("Failed to initialize analytics picker, but continuing:", error);
-            }
-            await cleanupExpiredAvailability();
-            await renderAll();
-            setupNotifications();
-
-            supabase
-            .channel('public:prospects')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'prospects' }, payload => {
-                renderAll();
-            })
-            .subscribe();
-
-            supabase
-            .channel('public:availability')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'availability' }, payload => {
-                renderAll();
-            })
-            .subscribe();
-
-            supabase
-            .channel('public:user_settings')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'user_settings' }, payload => {
-                renderAll();
-            })
-            .subscribe();
-        } catch (error) { // <-- AND ADD THIS CATCH BLOCK
-            console.error("A critical error occurred during app startup:", error);
-            alert("Sorry, the application could not start. Please clear your browser cache and try again.\n\nError: " + error.message);
+        try {
+            const now = new Date();
+            analyticsPicker.setDate(now, true);
+        } catch (error) {
+            console.error("Failed to initialize analytics picker, but continuing:", error);
         }
+        await cleanupExpiredAvailability();
+        await renderAll();
+        setupNotifications();
+
+        supabase
+          .channel('public:prospects')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'prospects' }, payload => {
+            renderAll();
+          })
+          .subscribe();
+
+         supabase
+          .channel('public:availability')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'availability' }, payload => {
+            renderAll();
+          })
+          .subscribe();
+          
+         supabase
+          .channel('public:user_settings')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'user_settings' }, payload => {
+            renderAll();
+          })
+          .subscribe();
     }
     
     function updateAuthView() {
