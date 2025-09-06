@@ -652,6 +652,14 @@
     let trendChartInstance = null;
     let isLoginView = true;
 
+    const stpPicker = flatpickr("#stp-datetime", { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true });
+    const gmsPicker = flatpickr("#gms-datetime", { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true });
+    const analyticsPicker = flatpickr("#analytics-month", { 
+        plugins: [ new monthSelectPlugin({ shorthand: false, dateFormat: "Y-m", altFormat: "F Y" }) ],
+        altInput: true,
+        onChange: () => renderAnalytics() 
+    });
+
     const translations = {
         'zh-CN': {
             tabCalendar: "日历", appTitle: "安利对象跟进系统💎", addProspectBtn: "➕ 添加新对象", tabDashboard: "对象跟进中心", tabAllProspects: "所有对象列表", tabAnalytics: "数据分析", tabSettings: "设置", tabGuide: "指南",
@@ -963,14 +971,6 @@
         renderDataStatus();
         renderRecurringAvailabilityForm();
     }
-    
-    const stpPicker = flatpickr("#stp-datetime", { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true });
-    const gmsPicker = flatpickr("#gms-datetime", { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true });
-    const analyticsPicker = flatpickr("#analytics-month", { 
-        plugins: [ new monthSelectPlugin({ shorthand: false, dateFormat: "Y-m", altFormat: "F Y" }) ],
-        altInput: true,
-        onChange: () => renderAnalytics() 
-    });
     
     const prospectModal = document.getElementById('prospect-modal'); 
     const actionModal = document.getElementById('action-modal');
