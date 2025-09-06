@@ -935,7 +935,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const { data: prospectsData, error: prospectsError } = await supabase.from('prospects').select('*').eq('user_id', user.id);
         const { data: availabilityData, error: availabilityError } = await supabase.from('availability').select('*').eq('user_id', user.id);
-        const { data: settingsData, error: settingsError } = await supabase.from('user_settings').select('*').eq('user_id', user.id).single();
+        const { data: settingsData, error: settingsError } = await supabase.from('user_settings').select('*').eq('user_id', user.id).maybeSingle();
 
         prospects = (prospectsData || []).map(p => ({ ...p, tags: Array.isArray(p.tags) ? p.tags : [] }));
         
