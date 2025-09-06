@@ -264,6 +264,34 @@
         .slot-picker-btn { display: inline-block; width: auto; margin: 3px; padding: 6px 12px; font-size: 0.9em; background-color: var(--secondary-color); border: 1px solid var(--border-color); }
         .slot-picker-btn:hover { background-color: var(--primary-color); color: white; }
 
+        /* Tablet Responsive Styles */
+        @media (max-width: 992px) { 
+            body { padding: 15px; }
+            .app-layout { flex-direction: column; } 
+            .sidebar { display: none; }
+            #show-availability-fab { display: flex; }
+        }
+
+        /* Phone Responsive Styles */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .container, .sidebar { padding: 15px; }
+            header { flex-direction: column; align-items: flex-start; gap: 15px; }
+            header h1 { font-size: 1.5em; }
+            .tabs { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 5px; -ms-overflow-style: none; scrollbar-width: none; }
+            .tabs::-webkit-scrollbar { display: none; }
+            .tab-button { flex-grow: 0; flex-shrink: 0; }
+            .prospect-meta { flex-direction: column; gap: 5px; align-items: flex-start; }
+            .prospect-meta .separator { display: none; }
+            .dashboard-header { flex-direction: column; align-items: flex-start; gap: 15px; margin-bottom: 20px; }
+            .dashboard-header .controls { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+            .filter-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+            .filter-controls .search-bar { grid-column: 1 / -1; }
+            .login-card { padding: 25px; }
+            header .controls .btn-success { padding: 10px 15px; font-size: 0.9em; }
+            .prospect-card .card-header h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; line-height: 1.4; }
+            .prospect-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+        }
     </style>
 </head>
 <body>
