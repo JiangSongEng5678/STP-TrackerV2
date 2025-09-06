@@ -638,6 +638,7 @@
             const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1YW9mbWlqdmttYW15ZnVnZHppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTkzOTUsImV4cCI6MjA3MjYzNTM5NX0.fVuYgjxpf2pRLYpkCBIfsC5PjBQKKRYtN5hnL9jrZ8A';
 
             const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            const supabase = _supabase; // <-- add this line
             // --- END: NEW SUPABASE SETUP ---
             
             // --- FIX: Add Flatpickr Chinese Locale directly to prevent loading errors ---
@@ -877,9 +878,9 @@
                 // Set locale for flatpickr instances
                 const locale = lang === 'zh-CN' ? 'zh' : 'default';
                 if (flatpickr.l10ns[locale]) {
-                    stpPicker.set('locale', locale);
-                    gmsPicker.set('locale', locale);
-                    analyticsPicker.set('locale', locale);
+                    withPicker(stpPicker, p => p.set('locale', locale));
+                    withPicker(gmsPicker, p => p.set('locale', locale));
+                    withPicker(analyticsPicker, p => p.set('locale', locale));
                 }
 
                 const elements = {
@@ -970,13 +971,38 @@
                 renderRecurringAvailabilityForm();
             }
             
-            const stpPicker = flatpickr("#stp-datetime", { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true });
-            const gmsPicker = flatpickr("#gms-datetime", { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true });
-            const analyticsPicker = flatpickr("#analytics-month", { 
-                plugins: [ new monthSelectPlugin({ shorthand: false, dateFormat: "Y-m", altFormat: "F Y" }) ],
+            // ---- Robust Flatpickr initialization ----
+            const stpEl = document.getElementById("stp-datetime");
+            const gmsEl = document.getElementById("gms-datetime");
+            const analyticsEl = document.getElementById("analytics-month");
+
+            const stpPicker = stpEl
+            ? flatpickr(stpEl, { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true })
+            : null;
+
+            const gmsPicker = gmsEl
+            ? flatpickr(gmsEl, { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true })
+            : null;
+
+            let analyticsPicker = null;
+            if (analyticsEl) {
+            const cfg = {
                 altInput: true,
-                onChange: () => renderAnalytics() 
-            });
+                onChange: () => renderAnalytics(),
+            };
+            // Only attach the month plugin if it actually loaded
+            if (window.monthSelectPlugin) {
+                cfg.plugins = [new monthSelectPlugin({ shorthand: false, dateFormat: "Y-m", altFormat: "F Y" })];
+            }
+            analyticsPicker = flatpickr(analyticsEl, cfg);
+            }
+
+            // helper to call methods on 1-or-many instances
+            function withPicker(picker, fn) {
+            if (!picker) return;
+            if (Array.isArray(picker)) picker.forEach(fn);
+            else fn(picker);
+            }
             
             const prospectModal = document.getElementById('prospect-modal'); 
             const actionModal = document.getElementById('action-modal');
@@ -2267,10 +2293,9 @@
                 setLanguage(preferredLanguage);
 
                 try {
-                    const now = new Date();
-                    analyticsPicker.setDate(now, true);
-                } catch (error) {
-                    console.error("Failed to initialize analytics picker, but continuing:", error);
+                    withPicker(analyticsPicker, p => p.setDate(new Date(), true));
+                } catch (err) {
+                    console.error("Failed to initialize analytics picker, but continuing:", err);
                 }
                 await cleanupExpiredAvailability();
                 await renderAll();
@@ -2423,18 +2448,18 @@
             })();
         });
     </script>
-<script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
-                .then(registration => {
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                })
-                .catch(err => {
-                    console.log('ServiceWorker registration failed: ', err);
-                });
-        });
-    }
-</script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
 </body>
 </html>
