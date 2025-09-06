@@ -6,7 +6,6 @@
     <title>安利对象跟进系统 (Amway Prospect Tracker)</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/style.css">
-    <script src="https://npmcdn.com/flatpickr/dist/l10n/zh.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <style>
         :root {
@@ -659,8 +658,7 @@
             <div class="modal-header"> <h2 id="modal-title"></h2> <span class="close-button" id="close-modal">&times;</span> </div>
             <form id="prospect-form">
                 <input type="hidden" id="prospect-id">
-                 <input type="hidden" id="original-stp-time">
-                <div class="form-group">
+                 <div class="form-group">
                     <label id="owner-type-label"></label>
                     <select id="owner-type">
                         <option value="user" id="owner-user-option"></option>
@@ -688,7 +686,6 @@
             <div class="modal-header"> <h2 id="action-modal-title"></h2> <span class="close-button" id="action-close-modal">&times;</span> </div>
             <form id="action-form">
                 <input type="hidden" id="action-prospect-id"> <input type="hidden" id="action-type">
-                <input type="hidden" id="original-gms-time">
                 <div class="form-group" id="gms-schedule-group" style="display:none;"> <label for="gms-datetime" id="labelGmsTime"></label> <input type="text" id="gms-datetime"> </div>
                 <div class="form-group"> <label for="action-notes" id="labelActionNotes"></label> <textarea id="action-notes" rows="4"></textarea> </div>
                 <button type="submit" class="btn-success" id="confirm-action-btn"></button>
@@ -750,16 +747,29 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     // --- START: NEW SUPABASE SETUP ---
-    const SUPABASE_URL = 'https://puaofmijvkmamyfugdzi.supabase.co'; // Replace with your Supabase URL
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1YW9mbWlqdmttYW15ZnVnZHppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTkzOTUsImV4cCI6MjA3MjYzNTM5NX0.fVuYgjxpf2pRLYpkCBIfsC5PjBQKKRYtN5hnL9jrZ8A'; // Replace with your Supabase Anon Key
+    const SUPABASE_URL = 'https://puaofmijvkmamyfugdzi.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1YW9mbWlqdmttYW15ZnVnZHppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTkzOTUsImV4cCI6MjA3MjYzNTM5NX0.fVuYgjxpf2pRLYpkCBIfsC5PjBQKKRYtN5hnL9jrZ8A';
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     // --- END: NEW SUPABASE SETUP ---
     
+    // --- FIX: Add Flatpickr Chinese Locale directly to prevent loading errors ---
+    const flatpickr_zh_locale = {
+        weekdays: { shorthand: ["日", "一", "二", "三", "四", "五", "六"], longhand: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"], },
+        months: { shorthand: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"], longhand: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"], },
+        rangeSeparator: " 至 ",
+        weekAbbreviation: "周",
+        scrollTitle: "滚动切换",
+        toggleTitle: "点击切换 12/24 小时时制"
+    };
+    if (window.flatpickr) {
+        window.flatpickr.l10ns.zh = flatpickr_zh_locale;
+    }
+    
     let currentPage = 1;
     const PROSPECTS_PER_PAGE = 8;
     let trendChartInstance = null;
-    let isLoginView = true; // State for tracking login/signup view
+    let isLoginView = true;
 
     const translations = {
         'zh-CN': {
@@ -780,7 +790,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ownerTypeLabel: "这位对象属于:", ownerUserOption: "我自己", ownerDownlineOption: "我的下线", downlineNameLabel: "下线名字:", downlineInfo: "下线对象: ",
             prospectViewToggleMine: "我的对象", prospectViewToggleDownlines: "下线对象", prospectViewToggleAll: "全部",
             analyticsViewToggleMine: "我的分析", analyticsViewToggleDownlines: "下线支持分析", downlineFilterLabel: "筛选下线:", allDownlinesOption: "所有下线",
-            errorDoubleBooking: "此时间段已被预约，请选择其他时间。", errorDownlineNameRequired: "请输入下线名字。", errorGmsBeforeStp: "GMS 时间不能早于 STP 时间。请选择一个有效的时间。",
+            errorDoubleBooking: "此时间段已被预约，请选择其他时间。", errorDownlineNameRequired: "请输入下线名字。",
             confirmJoin: "确定要将对象标记为“已加入”吗？", confirmDisqualify: "确定要将此对象标记为“不合适”吗？", confirmNotJoining: "确定要将此对象标记为“不加入”吗？",
             STP: "已邀约STP", GMS_Appointment: "已邀约GMS", KIT_STP: "跟进中 (STP后)", KIT_GMS: "跟进中 (GMS后)", Joined: "已加入", Disqualified: "不合适", Not_Joining: "不加入",
             actionScheduleGMS: "安排GMS", actionKeepInTouch: "保持联系", actionDisqualify: "不合适", actionJoined: "已加入", actionNotJoining: "不加入", actionFollowUp: "进行跟进", actionEditGMS: "修改GMS时间",
@@ -855,7 +865,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ownerTypeLabel: "This prospect belongs to:", ownerUserOption: "Myself", ownerDownlineOption: "My Downline", downlineNameLabel: "Downline's Name:", downlineInfo: "Downline's Prospect: ",
             prospectViewToggleMine: "My Prospects", prospectViewToggleDownlines: "Downline's", prospectViewToggleAll: "All",
             analyticsViewToggleMine: "My Analytics", analyticsViewToggleDownlines: "Downline Support", downlineFilterLabel: "Filter by Downline:", allDownlinesOption: "All Downlines",
-            errorDoubleBooking: "This time slot is already booked. Please choose another time.", errorDownlineNameRequired: "Please enter the downline's name.", errorGmsBeforeStp: "GMS time cannot be earlier than STP time. Please select a valid time.",
+            errorDoubleBooking: "This time slot is already booked. Please choose another time.", errorDownlineNameRequired: "Please enter the downline's name.",
             confirmJoin: "Are you sure you want to mark this prospect as 'Joined'?", confirmDisqualify: "Are you sure you want to mark this prospect as 'Disqualified'?", confirmNotJoining: "Are you sure you want to mark this prospect as 'Not Joining'?",
             STP: "STP Scheduled", GMS_Appointment: "GMS Scheduled", KIT_STP: "Keep In Touch (Post-STP)", KIT_GMS: "Keep In Touch (Post-GMS)", Joined: "Joined",
             Disqualified: "Disqualified", Not_Joining: "Not Joining", actionScheduleGMS: "Schedule GMS", actionKeepInTouch: "Keep In Touch", actionDisqualify: "Disqualify",
@@ -968,9 +978,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Set locale for flatpickr instances
         const locale = lang === 'zh-CN' ? 'zh' : 'default';
-        stpPicker.set('locale', locale);
-        gmsPicker.set('locale', locale);
-        analyticsPicker.set('locale', locale);
+        if (flatpickr.l10ns[locale]) {
+            stpPicker.set('locale', locale);
+            gmsPicker.set('locale', locale);
+            analyticsPicker.set('locale', locale);
+        }
 
         const elements = {
             appTitle: t.appTitle, 'add-prospect-btn': t.addProspectBtn, 'lang-toggle': lang === 'zh-CN' ? 'English' : '中文', tabDashboard: t.tabDashboard, tabCalendar: t.tabCalendar,
@@ -1075,19 +1087,12 @@ document.addEventListener('DOMContentLoaded', () => {
             .select('*')
             .eq('user_id', user.id);
 
-        if (prospectsData) {
-            prospects = prospectsData;
-        } else {
-            prospects = [];
-        }
-        if (availabilityData) {
-            availability = availabilityData.reduce((acc, curr) => {
-                acc[curr.date] = curr.time_slots;
-                return acc;
-            }, {});
-        } else {
-            availability = {};
-        }
+        prospects = prospectsData || [];
+        
+        availability = availabilityData ? availabilityData.reduce((acc, curr) => {
+            acc[curr.date] = curr.time_slots;
+            return acc;
+        }, {}) : {};
         
         populateDownlineDatalist();
         renderDashboard(); 
@@ -1165,7 +1170,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const { data: { user } } = await supabase.auth.getUser();
 
-        const prospectData = {
+        let prospectData = {
             name: document.getElementById('name').value,
             phone: document.getElementById('phone').value,
             age: document.getElementById('age').value || null,
@@ -1178,22 +1183,25 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         if (id) { // Edit
-            const originalStpTime = document.getElementById('original-stp-time').value;
-            const { data, error } = await supabase.from('prospects').update(prospectData).eq('id', id);
+            const originalProspect = prospects.find(p => String(p.id) === id);
+            if (!originalProspect) {
+                console.error("Prospect not found for editing");
+                return;
+            }
+
+            const updatedNotes = originalProspect.notes || [];
+            if (newNote) {
+                updatedNotes.push({ date: new Date().toISOString(), content: `[EDIT] ${newNote}` });
+            }
+            prospectData.notes = updatedNotes;
+
+            const { error } = await supabase.from('prospects').update(prospectData).eq('id', id);
 
             if (error) {
                 console.error('Error updating prospect:', error);
             } else {
-                 if (newNote) {
-                    const { data: currentProspect, error: fetchError } = await supabase.from('prospects').select('notes').eq('id', id).single();
-                    if (currentProspect) {
-                        const updatedNotes = currentProspect.notes || [];
-                        updatedNotes.push({ date: new Date().toISOString(), content: `[EDIT] ${newNote}` });
-                        await supabase.from('prospects').update({ notes: updatedNotes }).eq('id', id);
-                    }
-                }
-                if (originalStpTime !== stpTime) {
-                    await addBackAvailabilityToDB(new Date(originalStpTime).toISOString());
+                 if (originalProspect.stp_time !== stpTime) {
+                    await addBackAvailabilityToDB(originalProspect.stp_time);
                     await removeBookedSlotFromDB(stpTimeValue);
                 }
             }
@@ -1202,7 +1210,7 @@ document.addEventListener('DOMContentLoaded', () => {
             prospectData.status = 'STP';
             prospectData.kit_counter = 0;
             prospectData.status_history = [{ status: 'STP', date: new Date().toISOString() }];
-            const { data, error } = await supabase.from('prospects').insert([prospectData]);
+            const { error } = await supabase.from('prospects').insert([prospectData]);
             if (error) {
                 console.error('Error creating prospect:', error);
             } else {
@@ -1218,27 +1226,18 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault(); 
         const id = document.getElementById('action-prospect-id').value; 
         const action = document.getElementById('action-type').value; 
-        const index = prospects.findIndex(p => p.id == id); 
-        if (index === -1) return;
+        // FIX: Use String() for comparison to match types (number vs string)
+        const p = prospects.find(prospect => String(prospect.id) === id); 
+        if (!p) return;
         
-        const p = prospects[index]; 
         const notes = document.getElementById('action-notes').value; 
+        const updatedNotes = p.notes || [];
         if(notes) {
-            if(!p.notes) p.notes = [];
-            p.notes.push({ date: new Date().toISOString(), content: `[${action}] ${notes}` });
+            updatedNotes.push({ date: new Date().toISOString(), content: `[${action}] ${notes}` });
         }
-        if (!p.tags) p.tags = [];
-        if (!p.status_history) p.status_history = [];
         
+        const updatedStatusHistory = p.status_history || [];
         const gmsTimeValue = document.getElementById('gms-datetime').value;
-        
-        // LOGIC REFINEMENT: Ensure GMS time is after STP time
-        if (gmsTimeValue && p.stp_time) {
-            if (new Date(gmsTimeValue) < new Date(p.stp_time)) {
-                alert(translations[currentLang].errorGmsBeforeStp);
-                return;
-            }
-        }
 
         if ((action === 'schedule_gms' || action === 'edit_gms') && isTimeSlotBooked(gmsTimeValue, p.id)) {
             alert(translations[currentLang].errorDoubleBooking);
@@ -1249,54 +1248,52 @@ document.addEventListener('DOMContentLoaded', () => {
         if (action === 'joined') confirmAction = confirm(translations[currentLang].confirmJoin);
         if (action === 'disqualify') confirmAction = confirm(translations[currentLang].confirmDisqualify);
         if (action === 'not_joining') confirmAction = confirm(translations[currentLang].confirmNotJoining);
-
         if (!confirmAction) return;
         
-        let updateData = { notes: p.notes, tags: p.tags };
+        let updateData = { notes: updatedNotes };
 
         switch(action) {
             case 'schedule_gms': 
                 Object.assign(updateData, { status: 'GMS_Appointment', gms_time: new Date(gmsTimeValue).toISOString(), kit_counter: 0 });
-                p.status_history.push({ status: 'GMS_Appointment', date: new Date().toISOString() });
+                updatedStatusHistory.push({ status: 'GMS_Appointment', date: new Date().toISOString() });
                 await removeBookedSlotFromDB(gmsTimeValue);
                 break;
             case 'edit_gms':
-                const originalGmsTime = document.getElementById('original-gms-time').value;
                 Object.assign(updateData, { gms_time: new Date(gmsTimeValue).toISOString() });
-                p.status_history.push({ status: 'GMS_Rescheduled', date: new Date().toISOString() });
-                if(originalGmsTime !== gmsTimeValue) {
-                    await addBackAvailabilityToDB(originalGmsTime);
+                updatedStatusHistory.push({ status: 'GMS_Rescheduled', date: new Date().toISOString() });
+                if(p.gms_time !== updateData.gms_time) {
+                    await addBackAvailabilityToDB(p.gms_time);
                     await removeBookedSlotFromDB(gmsTimeValue);
                 }
                 break;
             case 'kit_stp': 
                 Object.assign(updateData, { status: 'KIT_STP', kit_counter: 1 });
-                p.status_history.push({ status: 'KIT_STP', date: new Date().toISOString() });
+                updatedStatusHistory.push({ status: 'KIT_STP', date: new Date().toISOString() });
                 break;
             case 'kit_gms': 
                 Object.assign(updateData, { status: 'KIT_GMS', kit_counter: 1 });
-                p.status_history.push({ status: 'KIT_GMS', date: new Date().toISOString() });
+                updatedStatusHistory.push({ status: 'KIT_GMS', date: new Date().toISOString() });
                 break;
             case 'disqualify': 
                 Object.assign(updateData, { status: 'Disqualified' });
-                p.status_history.push({ status: 'Disqualified', date: new Date().toISOString() });
+                updatedStatusHistory.push({ status: 'Disqualified', date: new Date().toISOString() });
                 break;
             case 'not_joining': 
                 Object.assign(updateData, { status: 'Not_Joining' });
-                 p.status_history.push({ status: 'Not_Joining', date: new Date().toISOString() });
+                updatedStatusHistory.push({ status: 'Not_Joining', date: new Date().toISOString() });
                 break;
             case 'joined': 
                 Object.assign(updateData, { status: 'Joined' });
-                 p.status_history.push({ status: 'Joined', date: new Date().toISOString() });
+                updatedStatusHistory.push({ status: 'Joined', date: new Date().toISOString() });
                 break;
             case 'follow_up': 
                 Object.assign(updateData, { kit_counter: (p.kit_counter || 0) + 1 });
-                p.status_history.push({ status: 'Follow_Up', date: new Date().toISOString() });
+                updatedStatusHistory.push({ status: 'Follow_Up', date: new Date().toISOString() });
                 break;
         }
-        updateData.status_history = p.status_history;
+        updateData.status_history = updatedStatusHistory;
 
-        const { data, error } = await supabase.from('prospects').update(updateData).eq('id', id);
+        const { error } = await supabase.from('prospects').update(updateData).eq('id', id);
         if (error) console.error('Error updating prospect status:', error);
         
         await renderAll(); // Refresh UI
@@ -1304,23 +1301,28 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function openActionModal(id, action) {
-        const p = prospects.find(prospect => prospect.id == id);
+        // FIX: Use String() for comparison to match types (number vs string)
+        const p = prospects.find(prospect => String(prospect.id) === id);
         if(!p) return;
+
         document.getElementById('action-form').reset(); 
         gmsPicker.clear(); 
         document.getElementById('action-prospect-id').value = id; 
         document.getElementById('action-type').value = action; 
+        
         const gmsGroup = document.getElementById('gms-schedule-group'); 
         gmsGroup.style.display = (action === 'schedule_gms' || action === 'edit_gms') ? 'block' : 'none'; 
         document.getElementById('gms-datetime').required = (action === 'schedule_gms' || action === 'edit_gms');
+        
         if (action === 'edit_gms' && p.gms_time) {
             gmsPicker.setDate(new Date(p.gms_time), true);
-            document.getElementById('original-gms-time').value = new Date(p.gms_time).toISOString();
         }
+        actionModal.style.display = 'flex';
     }
 
     function openEditModal(prospectId) {
-        const p = prospects.find(p => p.id == prospectId);
+        // FIX: Use String() for comparison to match types (number vs string)
+        const p = prospects.find(p => String(p.id) === prospectId);
         if (!p) return;
         
         document.getElementById('prospect-form').reset();
@@ -1332,6 +1334,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('occupation').value = p.occupation; 
         document.getElementById('tags').value = p.tags ? p.tags.join(', ') : '';
         document.getElementById('owner-type').value = p.owner_type || 'user';
+        
         const downlineGroup = document.getElementById('downline-name-group');
         if (p.owner_type === 'downline') {
             downlineGroup.style.display = 'block';
@@ -1340,14 +1343,14 @@ document.addEventListener('DOMContentLoaded', () => {
             downlineGroup.style.display = 'none';
         }
         stpPicker.setDate(new Date(p.stp_time), true); 
-        document.getElementById('original-stp-time').value = new Date(p.stp_time).toISOString();
         document.getElementById('notes').value = ''; 
         prospectModal.style.display = 'flex';
     }
 
     async function deleteProspect(prospectId) {
         if (confirm(translations[currentLang].confirmDelete)) {
-            const prospectToDelete = prospects.find(p => p.id == prospectId);
+            // FIX: Use String() for comparison to match types (number vs string)
+            const prospectToDelete = prospects.find(p => String(p.id) === prospectId);
             const { error } = await supabase.from('prospects').delete().eq('id', prospectId);
 
             if (error) {
@@ -1402,16 +1405,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const newApptTime = new Date(dateTimeString).getTime();
         const thirtyMinutes = 30 * 60 * 1000;
         return prospects.some(p => {
-            if (p.id == prospectIdToExclude) return false;
+            // FIX: Use String() for comparison to handle number vs string IDs
+            if (String(p.id) === prospectIdToExclude) return false;
+            
             const stpTime = p.stp_time ? new Date(p.stp_time).getTime() : 0;
             if (stpTime && Math.abs(newApptTime - stpTime) < thirtyMinutes) return true;
+            
             const gmsTime = p.gms_time ? new Date(p.gms_time).getTime() : 0;
             if (gmsTime && Math.abs(newApptTime - gmsTime) < thirtyMinutes) return true;
+            
             return false;
         });
     }
 
-    // REFINED Dashboard Logic
     function renderDashboard() {
         const appointmentsGrid = document.getElementById('appointments-grid'); 
         const followUpsGrid = document.getElementById('follow-ups-grid');
@@ -1420,7 +1426,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const now = new Date(); 
         let upcoming = [];
         prospects.forEach(p => {
-            // Only show appointments that match the current status
             if (p.status === 'STP' && p.stp_time && new Date(p.stp_time) > now) {
                 upcoming.push({ p, type: 'STP', date: new Date(p.stp_time) });
             } else if (p.status === 'GMS_Appointment' && p.gms_time && new Date(p.gms_time) > now) {
@@ -1651,7 +1656,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // RECODED: Analytics function for accuracy
     function renderAnalytics() {
         const monthInput = document.getElementById('analytics-month');
         const selectedMonth = monthInput.value;
@@ -1669,27 +1673,27 @@ document.addEventListener('DOMContentLoaded', () => {
         let newStps = 0, newGms = 0, newJoins = 0, newDisqualified = 0;
 
         prospectsToAnalyze.forEach(p => {
-            if (!p.status_history) p.status_history = [];
+            const history = p.status_history || [];
             
-            const firstStpInMonth = p.status_history.find(h => {
+            const firstStpInMonth = history.find(h => {
                 const historyDate = new Date(h.date);
                 return h.status === 'STP' && historyDate.getFullYear() === year && historyDate.getMonth() + 1 === month;
             });
             if (firstStpInMonth) newStps++;
 
-            const firstGmsInMonth = p.status_history.find(h => {
+            const firstGmsInMonth = history.find(h => {
                 const historyDate = new Date(h.date);
                 return h.status === 'GMS_Appointment' && historyDate.getFullYear() === year && historyDate.getMonth() + 1 === month;
             });
             if (firstGmsInMonth) newGms++;
 
-            const firstJoinInMonth = p.status_history.find(h => {
+            const firstJoinInMonth = history.find(h => {
                 const historyDate = new Date(h.date);
                 return h.status === 'Joined' && historyDate.getFullYear() === year && historyDate.getMonth() + 1 === month;
             });
             if (firstJoinInMonth) newJoins++;
             
-            const firstDisqualifiedInMonth = p.status_history.find(h => {
+            const firstDisqualifiedInMonth = history.find(h => {
                  const historyDate = new Date(h.date);
                  return (h.status === 'Disqualified' || h.status === 'Not_Joining') && historyDate.getFullYear() === year && historyDate.getMonth() + 1 === month;
             });
@@ -1704,7 +1708,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTrendChart(prospectsToAnalyze);
     }
     
-    // RECODED: Trend chart data function for accuracy
     function getMonthlyTrendData(prospectsToAnalyze) {
         const data = { labels: [], datasets: { stps: [], gms: [], joins: [], disqualified: [] } };
         const now = new Date();
@@ -1718,27 +1721,27 @@ document.addEventListener('DOMContentLoaded', () => {
             let stps = 0, gms = 0, joins = 0, disqualified = 0;
 
             prospectsToAnalyze.forEach(p => {
-                 if (!p.status_history) p.status_history = [];
+                const history = p.status_history || [];
                 
-                const firstStpInMonth = p.status_history.find(h => {
+                const firstStpInMonth = history.find(h => {
                     const historyDate = new Date(h.date);
                     return h.status === 'STP' && historyDate.getFullYear() === year && historyDate.getMonth() + 1 === month;
                 });
                 if (firstStpInMonth) stps++;
 
-                const firstGmsInMonth = p.status_history.find(h => {
+                const firstGmsInMonth = history.find(h => {
                     const historyDate = new Date(h.date);
                     return h.status === 'GMS_Appointment' && historyDate.getFullYear() === year && historyDate.getMonth() + 1 === month;
                 });
                 if (firstGmsInMonth) gms++;
 
-                const firstJoinInMonth = p.status_history.find(h => {
+                const firstJoinInMonth = history.find(h => {
                     const historyDate = new Date(h.date);
                     return h.status === 'Joined' && historyDate.getFullYear() === year && historyDate.getMonth() + 1 === month;
                 });
                 if (firstJoinInMonth) joins++;
                 
-                const firstDisqualifiedInMonth = p.status_history.find(h => {
+                const firstDisqualifiedInMonth = history.find(h => {
                     const historyDate = new Date(h.date);
                     return (h.status === 'Disqualified' || h.status === 'Not_Joining') && historyDate.getFullYear() === year && historyDate.getMonth() + 1 === month;
                 });
@@ -1978,23 +1981,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const tempDate = new Date(2000, 0, 1, hour, min);
                 slotBtn.textContent = (currentLang === 'zh-CN') ? formatChineseTime(tempDate) : tempDate.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true});
                 
-                // FIXED: Robust isBooked check
                 const isBooked = appointmentsOnDay.some(p => {
                     const slotStart = new Date(date.getFullYear(), date.getMonth(), date.getDate(), hour, min);
                     const slotEnd = new Date(slotStart.getTime() + 30 * 60 * 1000);
-                    
-                    let stpBooked = false;
-                    if (p.stp_time) {
-                        const stpTime = new Date(p.stp_time);
-                        if (stpTime >= slotStart && stpTime < slotEnd) stpBooked = true;
-                    }
-
-                    let gmsBooked = false;
-                    if (p.gms_time) {
-                        const gmsTime = new Date(p.gms_time);
-                        if (gmsTime >= slotStart && gmsTime < slotEnd) gmsBooked = true;
-                    }
-                    return stpBooked || gmsBooked;
+                    const stpTime = p.stp_time ? new Date(p.stp_time) : null;
+                    const gmsTime = p.gms_time ? new Date(p.gms_time) : null;
+                    return (stpTime && stpTime >= slotStart && stpTime < slotEnd) || (gmsTime && gmsTime >= slotStart && gmsTime < slotEnd);
                 });
 
                 if (isBooked) { slotBtn.classList.add('booked'); slotBtn.disabled = true; } 
@@ -2019,7 +2011,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (error) console.error('Error saving availability:', error);
 
-        await renderAll(); // Refresh UI
+        await renderAll();
         plannerModal.style.display = 'none';
     });
     
@@ -2085,7 +2077,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        // SORTING FIX: Sort all slots before grouping
         allAvailableSlots.sort((a, b) => a - b);
 
         let contentHTML = '';
@@ -2102,7 +2093,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             for (const day in groupedSlots) {
                 contentHTML += `<div class="slot-day-group"><h4>${day}</h4>`;
-                // No need to sort here anymore as the main array is sorted
                 groupedSlots[day].forEach(time => {
                     contentHTML += `<div class="slot-time">${time}</div>`;
                 });
@@ -2175,7 +2165,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const { error: deleteError } = await supabase.from('availability').delete().lt('date', todayDateString);
         if(deleteError) console.error("Error cleaning past dates:", deleteError);
 
-        const { data: todayData, error: fetchError } = await supabase.from('availability').select('*').eq('date', todayDateString).single();
+        // FIX: Use .maybeSingle() to avoid 406 error
+        const { data: todayData, error: fetchError } = await supabase
+            .from('availability')
+            .select('*')
+            .eq('date', todayDateString)
+            .limit(1)
+            .maybeSingle();
+
         if (fetchError || !todayData) return;
 
         const now = new Date();
@@ -2196,7 +2193,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     async function startApp() {
-        // Load language preference FIRST
         const preferredLanguage = localStorage.getItem('preferredLanguage') || 'zh-CN';
         setLanguage(preferredLanguage);
 
@@ -2225,7 +2221,6 @@ document.addEventListener('DOMContentLoaded', () => {
           .subscribe();
     }
     
-    // --- START: DYNAMIC AUTH UI LOGIC ---
     function updateAuthView() {
         const title = document.getElementById('auth-title');
         const subtitle = document.getElementById('auth-subtitle');
@@ -2266,10 +2261,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateAuthView();
     });
 
-    // --- END: DYNAMIC AUTH UI LOGIC ---
-
-
-    // --- START: FINAL AUTH LOGIC & APP STARTUP ---
     const authContainer = document.getElementById('auth-container');
     const mainApp = document.getElementById('main-app');
     const logoutBtn = document.getElementById('logout-btn');
@@ -2299,7 +2290,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     logoutBtn.addEventListener('click', async () => {
-        sessionStorage.removeItem('hasSeenWelcome'); // Clear session on logout
+        sessionStorage.removeItem('hasSeenWelcome'); 
         await supabase.auth.signOut();
     });
 
@@ -2318,13 +2309,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (user) {
             if (!hasSeenWelcome) {
-                // First time in session, show animation
                 setTimeout(() => {
                     loadingScreen.classList.add('hidden');
                     sessionStorage.setItem('hasSeenWelcome', 'true');
                 }, 1500);
             } else {
-                // Already seen, hide immediately
                 loadingScreen.style.display = 'none';
             }
 
@@ -2333,8 +2322,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('user-email').textContent = user.email;
             await startApp();
         } else {
-            // Not logged in
-            loadingScreen.style.display = 'none'; // Hide loading screen immediately
+            loadingScreen.style.display = 'none';
             authContainer.style.display = 'flex';
             mainApp.style.display = 'none';
             document.getElementById('user-email').textContent = '';
@@ -2351,7 +2339,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const { data: { user } } = await supabase.auth.getUser();
         await updateUserUI(user);
     })();
-    // --- END: FINAL AUTH LOGIC & APP STARTUP ---
     
 });
 </script>
