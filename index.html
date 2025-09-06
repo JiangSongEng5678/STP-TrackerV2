@@ -78,11 +78,7 @@
         }
 
         .app-layout { display: flex; gap: 20px; max-width: 1400px; margin: 0 auto; align-items: flex-start; }
-        .main-content { 
-            flex-grow: 1; 
-            width: 100%;      /* <-- Add this line */
-            min-width: 0;       /* <-- Add this for extra stability */
-        }
+        .main-content { flex-grow: 1; }
         .sidebar { flex: 0 0 280px; position: sticky; top: 20px; }
         .container, .sidebar { background: var(--card-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.5); padding: 20px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); }
         .sidebar h3, #availability-modal-title { color: var(--primary-color); margin-top: 0; border-bottom: 2px solid var(--secondary-color); padding-bottom: 10px; font-size: 1.1em; }
@@ -270,7 +266,7 @@
         /* Tablet Responsive Styles */
         @media (max-width: 992px) { 
             body { padding: 15px; }
-            .app-layout { flex-direction: column; } 
+            .app-layout { display: block; } 
             .sidebar { display: none; }
             #show-availability-fab { display: flex; }
         }
@@ -632,12 +628,13 @@
     <script defer src="libs/monthSelect.js"></script>
     <script defer src="libs/chart.js"></script>
 <script>
+document.addEventListener('DOMContentLoaded', () => {
     // --- START: NEW SUPABASE SETUP ---
     const SUPABASE_URL = 'https://puaofmijvkmamyfugdzi.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1YW9mbWlqdmttYW15ZnVnZHppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTkzOTUsImV4cCI6MjA3MjYzNTM5NX0.fVuYgjxpf2pRLYpkCBIfsC5PjBQKKRYtN5hnL9jrZ8A';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     // --- END: NEW SUPABASE SETUP ---
-    document.addEventListener('DOMContentLoaded', () => {
+    
     // --- FIX: Add Flatpickr Chinese Locale directly to prevent loading errors ---
     const flatpickr_zh_locale = {
         weekdays: { shorthand: ["日", "一", "二", "三", "四", "五", "六"], longhand: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"], },
@@ -655,14 +652,6 @@
     const PROSPECTS_PER_PAGE = 8;
     let trendChartInstance = null;
     let isLoginView = true;
-
-    const stpPicker = flatpickr("#stp-datetime", { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true });
-    const gmsPicker = flatpickr("#gms-datetime", { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true });
-    const analyticsPicker = flatpickr("#analytics-month", { 
-        plugins: [ new monthSelectPlugin({ shorthand: false, dateFormat: "Y-m", altFormat: "F Y" }) ],
-        altInput: true,
-        onChange: () => renderAnalytics() 
-    });
 
     const translations = {
         'zh-CN': {
@@ -975,6 +964,14 @@
         renderDataStatus();
         renderRecurringAvailabilityForm();
     }
+    
+    const stpPicker = flatpickr("#stp-datetime", { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true });
+    const gmsPicker = flatpickr("#gms-datetime", { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true });
+    const analyticsPicker = flatpickr("#analytics-month", { 
+        plugins: [ new monthSelectPlugin({ shorthand: false, dateFormat: "Y-m", altFormat: "F Y" }) ],
+        altInput: true,
+        onChange: () => renderAnalytics() 
+    });
     
     const prospectModal = document.getElementById('prospect-modal'); 
     const actionModal = document.getElementById('action-modal');
