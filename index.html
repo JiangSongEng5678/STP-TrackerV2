@@ -628,13 +628,12 @@
     <script defer src="libs/monthSelect.js"></script>
     <script defer src="libs/chart.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
     // --- START: NEW SUPABASE SETUP ---
     const SUPABASE_URL = 'https://puaofmijvkmamyfugdzi.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1YW9mbWlqdmttYW15ZnVnZHppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTkzOTUsImV4cCI6MjA3MjYzNTM5NX0.fVuYgjxpf2pRLYpkCBIfsC5PjBQKKRYtN5hnL9jrZ8A';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     // --- END: NEW SUPABASE SETUP ---
-    
+    window.addEventListener('load', () => {
     // --- FIX: Add Flatpickr Chinese Locale directly to prevent loading errors ---
     const flatpickr_zh_locale = {
         weekdays: { shorthand: ["日", "一", "二", "三", "四", "五", "六"], longhand: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"], },
