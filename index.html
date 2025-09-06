@@ -875,12 +875,8 @@
                 localStorage.setItem('preferredLanguage', lang); // Save preference
                 const t = translations[lang];
 
-                // Set locale for flatpickr instances
-                const locale = lang === 'zh-CN' ? 'zh' : 'default';
-                if (flatpickr.l10ns[locale]) {
-                    withPicker(stpPicker, p => p.set('locale', locale));
-                    withPicker(gmsPicker, p => p.set('locale', locale));
-                    withPicker(analyticsPicker, p => p.set('locale', locale));
+                if (analyticsPicker) {
+                    analyticsPicker.set('locale', locale);
                 }
 
                 const elements = {
@@ -971,38 +967,40 @@
                 renderRecurringAvailabilityForm();
             }
             
-            // ---- Robust Flatpickr initialization ----
-            const stpEl = document.getElementById("stp-datetime");
-            const gmsEl = document.getElementById("gms-datetime");
-            const analyticsEl = document.getElementById("analytics-month");
-
-            const stpPicker = stpEl
-            ? flatpickr(stpEl, { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true })
-            : null;
-
-            const gmsPicker = gmsEl
-            ? flatpickr(gmsEl, { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true })
-            : null;
-
-            let analyticsPicker = null;
-            if (analyticsEl) {
-            const cfg = {
-                altInput: true,
-                onChange: () => renderAnalytics(),
-            };
-            // Only attach the month plugin if it actually loaded
-            if (window.monthSelectPlugin) {
-                cfg.plugins = [new monthSelectPlugin({ shorthand: false, dateFormat: "Y-m", altFormat: "F Y" })];
-            }
-            analyticsPicker = flatpickr(analyticsEl, cfg);
+            // Helper to always return a single Flatpickr instance
+            function initPicker(selector, config) {
+            const elements = document.querySelectorAll(selector);
+            if (!elements.length) return null;
+            if (elements.length === 1) return flatpickr(elements[0], config);
+            // multiple matches → return first instance
+            return flatpickr(elements[0], config);
             }
 
-            // helper to call methods on 1-or-many instances
-            function withPicker(picker, fn) {
-            if (!picker) return;
-            if (Array.isArray(picker)) picker.forEach(fn);
-            else fn(picker);
-            }
+            // Initialize pickers
+            const stpPicker = initPicker("#stp-datetime", {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            time_24hr: true
+            });
+
+            const gmsPicker = initPicker("#gms-datetime", {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            time_24hr: true
+            });
+
+            const analyticsPicker = initPicker("#analytics-month", {
+            altInput: true,
+            plugins: [
+                new monthSelectPlugin({
+                shorthand: false,
+                dateFormat: "Y-m",
+                altFormat: "F Y"
+                })
+            ],
+            onChange: () => renderAnalytics()
+            });
+
             
             const prospectModal = document.getElementById('prospect-modal'); 
             const actionModal = document.getElementById('action-modal');
@@ -2292,10 +2290,8 @@
                 const preferredLanguage = localStorage.getItem('preferredLanguage') || 'zh-CN';
                 setLanguage(preferredLanguage);
 
-                try {
-                    withPicker(analyticsPicker, p => p.setDate(new Date(), true));
-                } catch (err) {
-                    console.error("Failed to initialize analytics picker, but continuing:", err);
+                if (analyticsPicker) {
+                    analyticsPicker.setDate(new Date(), true);
                 }
                 await cleanupExpiredAvailability();
                 await renderAll();
