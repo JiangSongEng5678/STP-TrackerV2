@@ -791,6 +791,8 @@ document.addEventListener('DOMContentLoaded', () => {
             prospectViewToggleMine: "我的对象", prospectViewToggleDownlines: "下线对象", prospectViewToggleAll: "全部",
             analyticsViewToggleMine: "我的分析", analyticsViewToggleDownlines: "下线支持分析", downlineFilterLabel: "筛选下线:", allDownlinesOption: "所有下线",
             errorDoubleBooking: "此时间段已被预约，请选择其他时间。", errorDownlineNameRequired: "请输入下线名字。",
+            // --- NEW TRANSLATION ---
+            errorGmsAfterStp: "GMS 时间必须在 STP 时间之后。",
             confirmJoin: "确定要将对象标记为“已加入”吗？", confirmDisqualify: "确定要将此对象标记为“不合适”吗？", confirmNotJoining: "确定要将此对象标记为“不加入”吗？",
             STP: "已邀约STP", GMS_Appointment: "已邀约GMS", KIT_STP: "跟进中 (STP后)", KIT_GMS: "跟进中 (GMS后)", Joined: "已加入", Disqualified: "不合适", Not_Joining: "不加入",
             actionScheduleGMS: "安排GMS", actionKeepInTouch: "保持联系", actionDisqualify: "不合适", actionJoined: "已加入", actionNotJoining: "不加入", actionFollowUp: "进行跟进", actionEditGMS: "修改GMS时间",
@@ -866,6 +868,8 @@ document.addEventListener('DOMContentLoaded', () => {
             prospectViewToggleMine: "My Prospects", prospectViewToggleDownlines: "Downline's", prospectViewToggleAll: "All",
             analyticsViewToggleMine: "My Analytics", analyticsViewToggleDownlines: "Downline Support", downlineFilterLabel: "Filter by Downline:", allDownlinesOption: "All Downlines",
             errorDoubleBooking: "This time slot is already booked. Please choose another time.", errorDownlineNameRequired: "Please enter the downline's name.",
+            // --- NEW TRANSLATION ---
+            errorGmsAfterStp: "GMS time must be after the STP time.",
             confirmJoin: "Are you sure you want to mark this prospect as 'Joined'?", confirmDisqualify: "Are you sure you want to mark this prospect as 'Disqualified'?", confirmNotJoining: "Are you sure you want to mark this prospect as 'Not Joining'?",
             STP: "STP Scheduled", GMS_Appointment: "GMS Scheduled", KIT_STP: "Keep In Touch (Post-STP)", KIT_GMS: "Keep In Touch (Post-GMS)", Joined: "Joined",
             Disqualified: "Disqualified", Not_Joining: "Not Joining", actionScheduleGMS: "Schedule GMS", actionKeepInTouch: "Keep In Touch", actionDisqualify: "Disqualify",
@@ -1226,7 +1230,6 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault(); 
         const id = document.getElementById('action-prospect-id').value; 
         const action = document.getElementById('action-type').value; 
-        // FIX: Use String() for comparison to match types (number vs string)
         const p = prospects.find(prospect => String(prospect.id) === id); 
         if (!p) return;
         
@@ -1239,9 +1242,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const updatedStatusHistory = p.status_history || [];
         const gmsTimeValue = document.getElementById('gms-datetime').value;
 
-        if ((action === 'schedule_gms' || action === 'edit_gms') && isTimeSlotBooked(gmsTimeValue, p.id)) {
-            alert(translations[currentLang].errorDoubleBooking);
-            return;
+        // --- NEW VALIDATION LOGIC ---
+        if (action === 'schedule_gms' || action === 'edit_gms') {
+            const newGmsTime = new Date(gmsTimeValue);
+            const stpTime = new Date(p.stp_time);
+            if (newGmsTime <= stpTime) {
+                alert(translations[currentLang].errorGmsAfterStp);
+                return; // Stop execution
+            }
+            if (isTimeSlotBooked(gmsTimeValue, p.id)) {
+                alert(translations[currentLang].errorDoubleBooking);
+                return; // Stop execution
+            }
         }
         
         let confirmAction = true;
@@ -1301,7 +1313,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function openActionModal(id, action) {
-        // FIX: Use String() for comparison to match types (number vs string)
         const p = prospects.find(prospect => String(prospect.id) === id);
         if(!p) return;
 
@@ -1321,7 +1332,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function openEditModal(prospectId) {
-        // FIX: Use String() for comparison to match types (number vs string)
         const p = prospects.find(p => String(p.id) === prospectId);
         if (!p) return;
         
@@ -1349,7 +1359,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function deleteProspect(prospectId) {
         if (confirm(translations[currentLang].confirmDelete)) {
-            // FIX: Use String() for comparison to match types (number vs string)
             const prospectToDelete = prospects.find(p => String(p.id) === prospectId);
             const { error } = await supabase.from('prospects').delete().eq('id', prospectId);
 
@@ -1405,7 +1414,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const newApptTime = new Date(dateTimeString).getTime();
         const thirtyMinutes = 30 * 60 * 1000;
         return prospects.some(p => {
-            // FIX: Use String() for comparison to handle number vs string IDs
             if (String(p.id) === prospectIdToExclude) return false;
             
             const stpTime = p.stp_time ? new Date(p.stp_time).getTime() : 0;
