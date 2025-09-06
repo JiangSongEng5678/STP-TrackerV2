@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="libs/monthSelect.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0d47a1">
-    <script src="libs/supabase.js"></script>
+    
     <style>
         :root {
             --primary-color: #0d47a1; 
@@ -627,11 +627,11 @@
     </div>
     <button id="show-availability-fab">📅</button>
 
-    <script src="libs/flatpickr.js"></script>
-    <script src="libs/monthSelect.js"></script>
-    <script src="libs/chart.js"></script>
+    <script defer src="libs/supabase.js"></script>
+    <script defer src="libs/flatpickr.js"></script>
+    <script defer src="libs/monthSelect.js"></script>
+    <script defer src="libs/chart.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
     // --- START: NEW SUPABASE SETUP ---
     const SUPABASE_URL = 'https://puaofmijvkmamyfugdzi.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1YW9mbWlqdmttYW15ZnVnZHppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTkzOTUsImV4cCI6MjA3MjYzNTM5NX0.fVuYgjxpf2pRLYpkCBIfsC5PjBQKKRYtN5hnL9jrZ8A';
@@ -2421,7 +2421,6 @@ document.addEventListener('DOMContentLoaded', () => {
         await updateUserUI(user);
     })();
     
-});
 </script>
 <script>
     if ('serviceWorker' in navigator) {
