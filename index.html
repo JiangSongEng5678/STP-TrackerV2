@@ -482,7 +482,30 @@
                          <button id="clearData" class="btn-danger">Clear All Data</button>
                     </div>
                 </div>
-                 <div id="guide" class="tab-content">
+                 
+                    <div class="settings-card" style="border-left-color: var(--info-color); margin-top: 20px;">
+                        <h3 id="remindersTitle">Reminders & Notifications</h3>
+                        <p id="remindersDesc">Get a notification before your STP / GMS meetings.</p>
+                        <div class="form-group">
+                            <label for="reminder-lead" id="reminderLeadLabel">Notify me:</label>
+                            <select id="reminder-lead" title="Netlify cron runs every 15 minutes">
+        <option value="15">15 minutes before</option>
+        <option value="30" selected>30 minutes before</option>
+        <option value="45">45 minutes before</option>
+        <option value="60">60 minutes before</option>
+        <option value="75">75 minutes before</option>
+        <option value="90">90 minutes before</option>
+        <option value="105">105 minutes before</option>
+        <option value="120">120 minutes before</option>
+      </select>
+                        </div>
+                        <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+                            <input type="checkbox" id="enable-reminders">
+                            <label for="enable-reminders" id="enableRemindersLabel"><b>Enable reminders on this device</b></label>
+                        </div>
+                        <p id="reminderStatus" style="font-size:0.9em;color:#64748b;">Status: <span id="reminderStatusText">Disabled</span> • Runs every 15 min</p>
+                    </div>
+    <div id="guide" class="tab-content">
                     <h2 id="guide-main-title">Amway Prospect tracker - User Guide</h2>
                     <hr>
                     <h3 id="guide-getting-started-title">1. Getting Started: How to Use This File</h3>
@@ -2792,7 +2815,6 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
 <section id="push-notifications" style="margin:1rem 0;">
   <h3>Notifications</h3>
   <p>Enable push notifications to receive reminders on this device.</p>
-  <button id="enable-push-btn" class="btn-primary" type="button">Enable Push Notifications</button>
 </section>
 <script>
 runWhenSupabaseReady(async () => {
@@ -2869,8 +2891,194 @@ runWhenSupabaseReady(async () => {
     }
   }
 
-  document.getElementById('enable-push-btn')?.addEventListener('click', enablePush);
+  });
+</script>
+
+<script>
+// ===== Reminders & Push (inline with app) =====
+(function(){
+  const VAPID_PUBLIC_KEY = (window.VAPID_PUBLIC_KEY || (document.querySelector('meta[name="vapid-public-key"]')||{}).content || '').trim();
+
+  function toUint8(base64) {
+    const padding = '='.repeat((4 - (base64.length % 4)) % 4);
+    const b64 = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw = atob(b64);
+    const out = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; ++i) out[i] = raw.charCodeAt(i);
+    return out;
+  }
+
+  function normalizeSubscription(sub) {
+    try {
+      const json = sub.toJSON ? sub.toJSON() : sub;
+      const { endpoint, keys } = json;
+      return { endpoint, keys: { auth: keys.auth, p256dh: keys.p256dh } };
+    } catch(e){ return null; }
+  }
+
+  async function saveSubscription(sub) {
+    try {
+      if (!window.supabase) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const norm = normalizeSubscription(sub);
+      if (!norm) return;
+      const payload = {
+        user_id: user.id,
+        endpoint: norm.endpoint,
+        auth: norm.keys.auth,
+        p256dh: norm.keys.p256dh,
+        created_at: new Date().toISOString()
+      };
+      await supabase.from('push_subscriptions').upsert(payload, { onConflict: 'endpoint' });
+    } catch(e){ console.warn('saveSubscription failed', e); }
+  }
+
+  async function requestPermissionAndSubscribe() {
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+      setReminderStatus('Not supported'); return false;
+    }
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { setReminderStatus('Permission denied'); return false; }
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: toUint8(VAPID_PUBLIC_KEY)
+      });
+      await saveSubscription(sub);
+      setReminderStatus('Enabled');
+      return true;
+    } catch(e){
+      console.error('subscribe failed', e);
+      setReminderStatus('Failed to enable');
+      return false;
+    }
+  }
+
+  function setReminderStatus(text) {
+    const el = document.getElementById('reminderStatusText');
+    if (el) el.textContent = text;
+  }
+
+  function getLeadMinutes() {
+    const sel = document.getElementById('reminder-lead');
+    const v = sel ? parseInt(sel.value, 10) : 30;
+    return isFinite(v) ? v : 30;
+  }
+
+  // Create a reminder in DB
+  async function scheduleReminder(user_id, title, body, atISO, url) {
+    try {
+      if (!window.supabase) return;
+      await supabase.from('reminders').insert({ user_id, title, body, fire_at: atISO, url });
+    } catch(e){ console.warn('scheduleReminder failed', e); }
+  }
+  window._scheduleReminder = scheduleReminder; // expose for other handlers
+
+  // Hook: when saving STP/GMS, create reminder based on lead time.
+  async function hookReminderForProspect(prospect) {
+    try {
+      const lead = getLeadMinutes();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const baseUrl = location.origin + location.pathname + '#/prospect/' + (prospect && prospect.id ? prospect.id : '');
+      if (prospect.stp_time) {
+        const t = new Date(prospect.stp_time).getTime() - lead*60000;
+        if (!isNaN(t)) await scheduleReminder(user.id, 'STP in ' + lead + ' min', prospect.name || 'Prospect', new Date(t).toISOString(), baseUrl);
+      }
+      if (prospect.gms_time) {
+        const t = new Date(prospect.gms_time).getTime() - lead*60000;
+        if (!isNaN(t)) await scheduleReminder(user.id, 'GMS in ' + lead + ' min', prospect.name || 'Prospect', new Date(t).toISOString(), baseUrl);
+      }
+    } catch(e){ console.warn('hookReminderForProspect failed', e); }
+  }
+  window._hookReminderForProspect = hookReminderForProspect;
+
+  // UI bindings in Settings
+  document.addEventListener('DOMContentLoaded', () => {
+    const chk = document.getElementById('enable-reminders');
+    const sel = document.getElementById('reminder-lead');
+    if (sel) {
+      const savedLead = localStorage.getItem('reminder-lead-mins');
+      if (savedLead) sel.value = savedLead;
+      sel.addEventListener('change', () => localStorage.setItem('reminder-lead-mins', sel.value));
+    }
+    if (chk) {
+      const saved = localStorage.getItem('enable-reminders') === 'true';
+      chk.checked = saved;
+      setReminderStatus(saved ? 'Enabled' : 'Disabled');
+      chk.addEventListener('change', async () => {
+        localStorage.setItem('enable-reminders', chk.checked ? 'true' : 'false');
+        if (chk.checked) { await requestPermissionAndSubscribe(); }
+        else { setReminderStatus('Disabled'); }
+      });
+    }
+    // Auto-enable if permission already granted and toggle saved
+    (async () => {
+      if (Notification.permission === 'granted' && localStorage.getItem('enable-reminders') === 'true') {
+        setReminderStatus('Enabled');
+        try {
+          const reg = await navigator.serviceWorker.ready;
+          const sub = await reg.pushManager.getSubscription();
+          if (!sub) await requestPermissionAndSubscribe();
+        } catch(e){}
+      }
+    })();
+  });
+})();
+</script>
+
+
+<script>
+// Schedule reminders when user submits forms (best-effort; relies on toggle + permission)
+document.addEventListener('DOMContentLoaded', () => {
+  function enabled() { return localStorage.getItem('enable-reminders') === 'true' && Notification.permission === 'granted'; }
+
+  const prospectForm = document.getElementById('prospect-form');
+  if (prospectForm) {
+    prospectForm.addEventListener('submit', async (e) => {
+      try {
+        if (!enabled()) return;
+        const name = (document.getElementById('name')||{}).value || 'Prospect';
+        const stpStr = (document.getElementById('stp-datetime')||{}).value;
+        const gmsStr = (document.getElementById('gms-datetime')||{}).value;
+        const lead = parseInt(localStorage.getItem('reminder-lead-mins')||'30', 10);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const baseUrl = location.origin + location.pathname + '#/prospect';
+        if (stpStr) {
+          const t = new Date(stpStr).getTime() - lead*60000;
+          if (!isNaN(t)) await _scheduleReminder(user.id, 'STP in ' + lead + ' min', name, new Date(t).toISOString(), baseUrl);
+        }
+        if (gmsStr) {
+          const t = new Date(gmsStr).getTime() - lead*60000;
+          if (!isNaN(t)) await _scheduleReminder(user.id, 'GMS in ' + lead + ' min', name, new Date(t).toISOString(), baseUrl);
+        }
+      } catch(err) { console.warn('form reminder hook error', err); }
+    }, { capture: true }); // use capture so it runs even if app stops propagation
+  }
+
+  const actionForm = document.getElementById('action-form');
+  if (actionForm) {
+    actionForm.addEventListener('submit', async (e) => {
+      try {
+        if (!enabled()) return;
+        const name = (document.querySelector('#action-form [name="prospect-name"]')||{}).value || (document.getElementById('name')||{}).value || 'Prospect';
+        const gmsStr = (document.getElementById('gms-datetime')||{}).value;
+        const lead = parseInt(localStorage.getItem('reminder-lead-mins')||'30', 10);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const baseUrl = location.origin + location.pathname + '#/prospect';
+        if (gmsStr) {
+          const t = new Date(gmsStr).getTime() - lead*60000;
+          if (!isNaN(t)) await _scheduleReminder(user.id, 'GMS in ' + lead + ' min', name, new Date(t).toISOString(), baseUrl);
+        }
+      } catch(err) { console.warn('action form reminder hook error', err); }
+    }, { capture: true });
+  }
 });
 </script>
+
 </body>
 </html>
