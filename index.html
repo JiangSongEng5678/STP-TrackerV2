@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+  <meta name="vapid-public-key" content="BIDMrzJt8JhFBipdyHSTNhdBVxetRNxuWw0KzxxUAn9e__jUNaxZg-luXSQ5kpjDtqMgvF1KmrZGNRNgRL7leLw">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>安利对象跟进系统 (Amway Prospect Tracker)</title>
@@ -302,6 +303,7 @@
             .prospect-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
         }
     </style>
+  <script>window.VAPID_PUBLIC_KEY="BIDMrzJt8JhFBipdyHSTNhdBVxetRNxuWw0KzxxUAn9e__jUNaxZg-luXSQ5kpjDtqMgvF1KmrZGNRNgRL7leLw";</script>
 </head>
 <body>
 
@@ -2794,6 +2796,24 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
 </section>
 <script>
 runWhenSupabaseReady(async () => {
+
+  // Cross-browser normalize of PushSubscription -> {endpoint, keys:{p256dh,auth}}
+  function normalizeSubscription(sub) {
+    function abToB64(buf) {
+      return btoa(String.fromCharCode.apply(null, new Uint8Array(buf)));
+    }
+    let p256dh, auth;
+    const j = (typeof sub.toJSON === 'function') ? sub.toJSON() : null;
+    if (j && j.keys && j.keys.p256dh && j.keys.auth) {
+      p256dh = j.keys.p256dh;
+      auth   = j.keys.auth;
+    } else {
+      p256dh = abToB64(sub.getKey('p256dh'));
+      auth   = abToB64(sub.getKey('auth'));
+    }
+    return { endpoint: sub.endpoint, keys: { p256dh, auth } };
+  }
+
   // Set your VAPID public key (from web-push generate-vapid-keys)
   const VAPID_PUBLIC_KEY = 'BIDMrzJt8JhFBipdyHSTNhdBVxetRNxuWw0KzxxUAn9e__jUNaxZg-luXSQ5kpjDtqMgvF1KmrZGNRNgRL7leLw';
 
@@ -2808,13 +2828,24 @@ runWhenSupabaseReady(async () => {
   async function saveSubscription(sub) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { alert('Please sign in first.'); return; }
+
+    const norm = normalizeSubscription(sub);
     const payload = {
-      user_id: user.id,
-      endpoint: sub.endpoint,
-      auth: sub.keys.auth,
-      p256dh: sub.keys.p256dh
+      user_id:  user.id,
+      endpoint: norm.endpoint,
+      auth:     norm.keys.auth,
+      p256dh:   norm.keys.p256dh,
+      created_at: new Date().toISOString()
     };
-    await supabase.from('push_subscriptions').upsert(payload, { onConflict: 'endpoint' });
+
+    const { error } = await supabase
+      .from('push_subscriptions')
+      .upsert(payload, { onConflict: 'endpoint' });
+
+    if (error) {
+      console.error(error);
+      alert('Failed saving subscription.');
+    }
   }
 
   async function enablePush() {
