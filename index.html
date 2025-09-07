@@ -1120,9 +1120,9 @@
             // Set locale for flatpickr instances
             const locale = lang === 'zh-CN' ? 'zh' : 'default';
             if (flatpickr.l10ns[locale]) {
-                stpPicker.set('locale', locale);
-                gmsPicker.set('locale', locale);
-                analyticsPicker.set('locale', locale);
+                stpPicker?.set('locale', locale);
+                gmsPicker?.set('locale', locale);
+                analyticsPicker?.set('locale', locale);
             }
 
             const elements = {
@@ -1302,7 +1302,7 @@
                 prospectData.notes = updatedNotes;
                 
                 // Retain automatic tags
-                prospectData.tags = [...new Set([...tags, ...getAutomaticTags(originalProspect)])];
+                prospectData.tags = [..new Set([...tags, ...getAutomaticTags(originalProspect)])];
 
 
                 const { error } = await supabase.from('prospects').update(prospectData).eq('id', id);
@@ -1417,7 +1417,7 @@
                     break;
             }
             updateData.status_history = updatedStatusHistory;
-            updateData.tags = [...new Set(updateData.tags)]; // Ensure unique tags
+            updateData.tags = [..new Set(updateData.tags)]; // Ensure unique tags
 
             const { error } = await supabase.from('prospects').update(updateData).eq('id', id);
             if (error) console.error('Error updating prospect status:', error);
@@ -1971,7 +1971,7 @@
         document.getElementById('downline-filter').addEventListener('change', renderAnalytics);
 
         function populateDownlineFilter() {
-            const downlineNames = [...new Set(prospects.filter(p => p.owner_type === 'downline' && p.downline_name).map(p => p.downline_name))];
+            const downlineNames = [..new Set(prospects.filter(p => p.owner_type === 'downline' && p.downline_name).map(p => p.downline_name))];
             const filterSelect = document.getElementById('downline-filter');
             const currentVal = filterSelect.value;
             filterSelect.innerHTML = `<option value="all">${translations[currentLang].allDownlinesOption}</option>`;
@@ -1982,7 +1982,7 @@
         }
 
         function populateDownlineDatalist() {
-            const downlineNames = [...new Set(prospects.filter(p => p.owner_type === 'downline' && p.downline_name).map(p => p.downline_name))];
+            const downlineNames = [..new Set(prospects.filter(p => p.owner_type === 'downline' && p.downline_name).map(p => p.downline_name))];
             const datalist = document.getElementById('downline-names-list');
             datalist.innerHTML = '';
             downlineNames.sort().forEach(name => {
@@ -2449,7 +2449,7 @@
                     btn.textContent = formatDate(slotDate);
                     btn.onclick = () => {
                         const picker = type === 'stp' ? stpPicker : gmsPicker;
-                        picker.setDate(slotDate, true);
+                        picker && picker.setDate(slotDate, true);
                     };
                     pickerContainer.appendChild(btn);
                 });
@@ -2499,9 +2499,12 @@
 
         async function startApp() {
             // ROBUSTNESS FIX: Initialize pickers now that the app is starting and DOM is ready.
-            stpPicker = flatpickr("#stp-datetime", { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true });
-            gmsPicker = flatpickr("#gms-datetime", { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true });
-            analyticsPicker = flatpickr("#analytics-month", { 
+            const _stpEl = document.querySelector("#stp-datetime");
+            if (_stpEl) stpPicker = flatpickr(_stpEl, { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true });
+            const _gmsEl = document.querySelector("#gms-datetime");
+            if (_gmsEl) gmsPicker = flatpickr(_gmsEl, { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true });
+            const _anEl = document.querySelector("#analytics-month");
+            if (_anEl) analyticsPicker = flatpickr(_anEl, { 
                 plugins: [ new monthSelectPlugin({ shorthand: false, dateFormat: "Y-m", altFormat: "F Y" }) ],
                 altInput: true,
                 onChange: () => renderAnalytics() 
@@ -2512,7 +2515,7 @@
 
             try {
                 const now = new Date();
-                analyticsPicker.setDate(now, true);
+                analyticsPicker?.setDate(now, true);
             } catch (error) {
                 console.error("Failed to initialize analytics picker, but continuing:", error);
             }
