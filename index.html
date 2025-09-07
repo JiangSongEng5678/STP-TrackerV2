@@ -637,11 +637,24 @@
     </div>
     <button id="show-availability-fab">📅</button>
 
-    <script defer src="libs/supabase.js"></script>
+    <script src="libs/supabase.js"></script>
     <script defer src="libs/flatpickr.js"></script>
     <script defer src="libs/chart.js"></script>
 
-    <script>
+    
+<script>
+function runWhenSupabaseReady(fn){
+  if (typeof supabase !== 'undefined' && supabase) { try { fn(); } catch(e) { console.error(e); } return; }
+  if (typeof supabaseReady !== 'undefined' && supabaseReady && typeof supabaseReady.then === 'function') {
+    supabaseReady.then(() => { try { fn(); } catch(e) { console.error(e); } });
+  } else {
+    const t = setInterval(() => {
+      if (typeof supabase !== 'undefined' && supabase) { clearInterval(t); try { fn(); } catch(e){ console.error(e);} }
+    }, 25);
+  }
+}
+</script>
+<script>
     function monthSelectPlugin(pluginConfig) {
         const defaultConfig = {
             shorthand: false,
@@ -833,7 +846,25 @@
         const SUPABASE_URL = 'https://puaofmijvkmamyfugdzi.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1YW9mbWlqdmttYW15ZnVnZHppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTkzOTUsImV4cCI6MjA3MjYzNTM5NX0.fVuYgjxpf2pRLYpkCBIfsC5PjBQKKRYtN5hnL9jrZ8A';
 
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        var supabase;
+let supabaseReadyResolve;
+const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
+(function initSupabase() {
+  function start() {
+    if (window.supabase && typeof window.supabase.createClient === 'function') {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      if (supabaseReadyResolve) supabaseReadyResolve(supabase);
+    } else {
+      // try again shortly (handles slow script load in some environments)
+      setTimeout(start, 25);
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
         // --- END: NEW SUPABASE SETUP ---
         
         // --- FIX: Add Flatpickr Chinese Locale directly to prevent loading errors ---
@@ -1179,7 +1210,7 @@
         }
         
         async function renderAll() { 
-            const { data: { user } } = await supabase.auth.getUser();
+            const { data: { user } } = await supabaseReady.then(() => supabase.auth.getUser());
             if (!user) return;
 
             const { data: prospectsData, error: prospectsError } = await supabase.from('prospects').select('*').eq('user_id', user.id);
@@ -1274,7 +1305,7 @@
             const tags = document.getElementById('tags').value.split(',').map(tag => tag.trim()).filter(tag => tag);
             const newNote = document.getElementById('notes').value;
             
-            const { data: { user } } = await supabase.auth.getUser();
+            const { data: { user } } = await supabaseReady.then(() => supabase.auth.getUser());
 
             let prospectData = {
                 name: document.getElementById('name').value,
@@ -1301,8 +1332,10 @@
                 }
                 prospectData.notes = updatedNotes;
                 
-                // Retain automatic tags
-                prospectData.tags = [..new Set([...tags, ...getAutomaticTags(originalProspect)])];
+                // Retain automatic tags (dedupe + handle missing tags)
+                const baseTags = Array.isArray(tags) ? tags : [];
+                prospectData.tags = Array.from(new Set([ ...baseTags, ...getAutomaticTags(originalProspect) ]));
+
 
 
                 const { error } = await supabase.from('prospects').update(prospectData).eq('id', id);
@@ -1417,7 +1450,7 @@
                     break;
             }
             updateData.status_history = updatedStatusHistory;
-            updateData.tags = [..new Set(updateData.tags)]; // Ensure unique tags
+            updateData.tags = Array.from(new Set(updateData.tags || []));
 
             const { error } = await supabase.from('prospects').update(updateData).eq('id', id);
             if (error) console.error('Error updating prospect status:', error);
@@ -1971,7 +2004,9 @@
         document.getElementById('downline-filter').addEventListener('change', renderAnalytics);
 
         function populateDownlineFilter() {
-            const downlineNames = [..new Set(prospects.filter(p => p.owner_type === 'downline' && p.downline_name).map(p => p.downline_name))];
+            const downlineNames = Array.from(new Set(
+                prospects.filter(p => p.owner_type === 'downline' && p.downline_name).map(p => p.downline_name)
+            ));
             const filterSelect = document.getElementById('downline-filter');
             const currentVal = filterSelect.value;
             filterSelect.innerHTML = `<option value="all">${translations[currentLang].allDownlinesOption}</option>`;
@@ -1982,7 +2017,9 @@
         }
 
         function populateDownlineDatalist() {
-            const downlineNames = [..new Set(prospects.filter(p => p.owner_type === 'downline' && p.downline_name).map(p => p.downline_name))];
+            const downlineNames = Array.from(new Set(
+                prospects.filter(p => p.owner_type === 'downline' && p.downline_name).map(p => p.downline_name)
+            ));
             const datalist = document.getElementById('downline-names-list');
             datalist.innerHTML = '';
             downlineNames.sort().forEach(name => {
@@ -1992,7 +2029,7 @@
 
         document.getElementById('clearData').addEventListener('click', async () => { 
             if (confirm(translations[currentLang].confirmClearData)) { 
-                const { data: { user } } = await supabase.auth.getUser();
+                const { data: { user } } = await supabaseReady.then(() => supabase.auth.getUser());
                 if(!user) return;
                 const { error: prospectError } = await supabase.from('prospects').delete().eq('user_id', user.id);
                 const { error: availabilityError } = await supabase.from('availability').delete().eq('user_id', user.id);
@@ -2037,7 +2074,7 @@
                     const data = JSON.parse(e.target.result);
                     if (data && data.prospects && data.availability) {
                         if (confirm(translations[currentLang].importConfirm)) {
-                            const { data: { user } } = await supabase.auth.getUser();
+                            const { data: { user } } = await supabaseReady.then(() => supabase.auth.getUser());
                             if(!user) return;
 
                             await supabase.from('prospects').delete().eq('user_id', user.id);
@@ -2164,7 +2201,7 @@
             const dateKey = `${currentPlannerDate.getFullYear()}-${String(currentPlannerDate.getMonth() + 1).padStart(2, '0')}-${String(currentPlannerDate.getDate()).padStart(2, '0')}`;
             const availableSlots = Array.from(document.querySelectorAll('#planner-timeline-slots .time-slot.available')).map(slot => slot.dataset.time);
             
-            const { data: { user } } = await supabase.auth.getUser();
+            const { data: { user } } = await supabaseReady.then(() => supabase.auth.getUser());
             if(!user) return;
             
             const { error } = await supabase
@@ -2189,7 +2226,7 @@
             const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
             const timeSlot = getSlotFromTime(date);
             
-            const { data: { user } } = await supabase.auth.getUser();
+            const { data: { user } } = await supabaseReady.then(() => supabase.auth.getUser());
             if(!user || availability[dateKey] === undefined) return;
 
             const updatedSlots = availability[dateKey].filter(slot => slot !== timeSlot);
@@ -2207,7 +2244,7 @@
             const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
             const timeSlot = getSlotFromTime(date);
             
-            const { data: { user } } = await supabase.auth.getUser();
+            const { data: { user } } = await supabaseReady.then(() => supabase.auth.getUser());
             if(!user) return;
             
             const currentSlots = availability[dateKey] || [];
@@ -2383,7 +2420,7 @@
             });
             recurringAvailability = newRecurring;
             
-            const { data: { user } } = await supabase.auth.getUser();
+            const { data: { user } } = await supabaseReady.then(() => supabase.auth.getUser());
             await supabase.from('user_settings').upsert({ user_id: user.id, recurring_availability: recurringAvailability }, { onConflict: 'user_id' });
 
             alert('Recurring availability saved!');
@@ -2462,7 +2499,7 @@
         // START: APP INITIALIZATION LOGIC
         // =======================================================
         async function cleanupExpiredAvailability() {
-            const { data: { user } } = await supabase.auth.getUser();
+            const { data: { user } } = await supabaseReady.then(() => supabase.auth.getUser());
             if (!user) return;
 
             const today = new Date();
@@ -2699,13 +2736,15 @@
             }
         }
 
-        supabase.auth.onAuthStateChange((event, session) => {
+        supabaseReady.then(() => {
+  supabase.auth.onAuthStateChange((event, session) => {
             const user = session ? session.user : null;
             updateUserUI(user);
+});
         });
 
         (async () => {
-            const { data: { user } } = await supabase.auth.getUser();
+            const { data: { user } } = await supabaseReady.then(() => supabase.auth.getUser());
             await updateUserUI(user);
         })();
         
