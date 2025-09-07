@@ -639,7 +639,6 @@
 
     <script defer src="libs/supabase.js"></script>
     <script defer src="libs/flatpickr.js"></script>
-    <script defer src="libs/monthSelect.js"></script>
     <script defer src="libs/chart.js"></script>
 
     <script>
@@ -1070,13 +1069,8 @@
         // =======================================================
         // --- START: INITIALIZATION OF DATE PICKERS
         // =======================================================
-        const stpPicker = flatpickr("#stp-datetime", { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true });
-        const gmsPicker = flatpickr("#gms-datetime", { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true });
-        const analyticsPicker = flatpickr("#analytics-month", { 
-            plugins: [ new monthSelectPlugin({ shorthand: false, dateFormat: "Y-m", altFormat: "F Y" }) ],
-            altInput: true,
-            onChange: () => renderAnalytics() 
-        });
+        // ROBUSTNESS FIX: Declare pickers here, but initialize them inside startApp
+        let stpPicker, gmsPicker, analyticsPicker; 
 
         // --- START: NEW EVENT LISTENERS & LOGIC FOR LOGIN PAGE ---
         const forgotPasswordModal = document.getElementById('forgot-password-modal');
@@ -2504,6 +2498,15 @@
 
 
         async function startApp() {
+            // ROBUSTNESS FIX: Initialize pickers now that the app is starting and DOM is ready.
+            stpPicker = flatpickr("#stp-datetime", { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true });
+            gmsPicker = flatpickr("#gms-datetime", { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true });
+            analyticsPicker = flatpickr("#analytics-month", { 
+                plugins: [ new monthSelectPlugin({ shorthand: false, dateFormat: "Y-m", altFormat: "F Y" }) ],
+                altInput: true,
+                onChange: () => renderAnalytics() 
+            });
+
             const preferredLanguage = localStorage.getItem('preferredLanguage') || 'zh-CN';
             setLanguage(preferredLanguage);
 
@@ -2513,6 +2516,46 @@
             } catch (error) {
                 console.error("Failed to initialize analytics picker, but continuing:", error);
             }
+
+            // Attach all event listeners for the main app
+            const prospectModal = document.getElementById('prospect-modal'); 
+            const actionModal = document.getElementById('action-modal');
+            const plannerModal = document.getElementById('planner-modal');
+            const availabilityModal = document.getElementById('availability-modal');
+            const showAvailabilityFab = document.getElementById('show-availability-fab');
+            
+            document.getElementById('add-prospect-btn').onclick = () => { 
+                document.getElementById('prospect-form').reset(); 
+                stpPicker.clear(); 
+                document.getElementById('prospect-id').value = ''; 
+                document.getElementById('modal-title').textContent = translations[currentLang].modalTitleAdd; 
+                document.getElementById('downline-name-group').style.display = 'none';
+                renderAvailableSlotsForPicker('stp');
+                prospectModal.style.display = 'flex'; 
+            };
+            document.getElementById('close-modal').onclick = () => prospectModal.style.display = 'none';
+            document.getElementById('action-close-modal').onclick = () => actionModal.style.display = 'none';
+            document.getElementById('close-planner-modal').onclick = () => plannerModal.style.display = 'none';
+            document.getElementById('close-availability-modal').onclick = () => availabilityModal.style.display = 'none';
+            showAvailabilityFab.onclick = () => availabilityModal.style.display = 'flex';
+            document.getElementById('lang-toggle').addEventListener('click', () => setLanguage(currentLang === 'zh-CN' ? 'en' : 'zh-CN'));
+            
+            window.addEventListener('click', (e) => {
+                if (!e.target.closest('.card-menu-container')) {
+                    document.querySelectorAll('.card-menu.open').forEach(menu => menu.classList.remove('open'));
+                }
+                if (e.target == prospectModal) prospectModal.style.display = 'none'; 
+                if (e.target == actionModal) actionModal.style.display = 'none'; 
+                if (e.target == plannerModal) plannerModal.style.display = 'none';
+                if (e.target == availabilityModal) availabilityModal.style.display = 'none';
+            });
+
+            document.querySelectorAll('.tab-button').forEach(button => { button.addEventListener('click', () => { document.querySelectorAll('.tab-button, .tab-content').forEach(el => el.classList.remove('active')); button.classList.add('active'); document.getElementById(button.dataset.tab).classList.add('active'); if(button.dataset.tab === 'analytics') { populateDownlineFilter(); renderAnalytics(); } }); });
+            
+            document.getElementById('owner-type').addEventListener('change', (e) => {
+                document.getElementById('downline-name-group').style.display = e.target.value === 'downline' ? 'block' : 'none';
+            });
+            
             await cleanupExpiredAvailability();
             await renderAll();
             setupNotifications();
