@@ -2795,7 +2795,7 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
 <script>
 runWhenSupabaseReady(async () => {
   // Set your VAPID public key (from web-push generate-vapid-keys)
-  const VAPID_PUBLIC_KEY = 'REPLACE_WITH_YOUR_VAPID_PUBLIC_KEY';
+  const VAPID_PUBLIC_KEY = 'BIDMrzJt8JhFBipdyHSTNhdBVxetRNxuWw0KzxxUAn9e__jUNaxZg-luXSQ5kpjDtqMgvF1KmrZGNRNgRL7leLw';
 
   const toUint8 = (base64) => {
     const padding = '='.repeat((4 - (base64.length % 4)) % 4);
