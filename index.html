@@ -1,16 +1,17 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>安利对象跟进系统 (Amway Prospect Tracker)</title>
-    <link rel="stylesheet" href="libs/flatpickr.min.css">
-    <link rel="stylesheet" href="libs/monthSelect.css">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0d47a1">
-    
-    <style>
-        :root {
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>
+   安利对象跟进系统 (Amway Prospect Tracker)
+  </title>
+  <link href="libs/flatpickr.min.css" rel="stylesheet"/>
+  <link href="libs/monthSelect.css" rel="stylesheet"/>
+  <link href="manifest.json" rel="manifest"/>
+  <meta content="#0d47a1" name="theme-color"/>
+  <style>
+   :root {
             --primary-color: #0d47a1; 
             --secondary-color: #f1f5f9; 
             --accent-color: #10b981; 
@@ -301,13 +302,12 @@
             .prospect-card .card-header h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; line-height: 1.4; }
             .prospect-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
         }
-    </style>
-</head>
-<body>
-
-<!-- Early language init & live toggle binding -->
-<script>
-(function(){
+  </style>
+ </head>
+ <body>
+  <!-- Early language init & live toggle binding -->
+  <script>
+   (function(){
   const preferred = localStorage.getItem('preferredLanguage') || 'zh-CN';
   window.currentLang = preferred;
   function trySet(){
@@ -327,348 +327,802 @@
     if (typeof setLanguage === 'function') setLanguage(next);
   }, { passive: true });
 })();
-</script>
-
-    <div id="toast-container"></div>
-    <div id="loading-screen">
-        <div class="welcome-message">
-            <span id="welcome-icon">💎</span> <span id="welcome-text">欢迎钻石们!</span>
-        </div>
+  </script>
+  <div id="toast-container">
+  </div>
+  <div id="loading-screen">
+   <div class="welcome-message">
+    <span id="welcome-icon">
+     💎
+    </span>
+    <span id="welcome-text">
+     欢迎钻石们!
+    </span>
+   </div>
+  </div>
+  <div id="auth-container" style="display: none;">
+   <div class="login-card">
+    <img alt="Logo" class="login-logo" src="images/icon-192x192.png"/>
+    <h2 id="auth-title">
+     Welcome Back
+    </h2>
+    <p id="auth-subtitle">
+     Login to track your prospects.
+    </p>
+    <div class="auth-form-group">
+     <span class="icon">
+      📧
+     </span>
+     <input autocomplete="email" id="auth-email" placeholder="Email" type="email"/>
     </div>
-
-    <div id="auth-container" style="display: none;">
-        <div class="login-card">
-            <img src="images/icon-192x192.png" alt="Logo" class="login-logo">
-            <h2 id="auth-title">Welcome Back</h2>
-            <p id="auth-subtitle">Login to track your prospects.</p>
-            
-            <div class="auth-form-group">
-                <span class="icon">📧</span>
-                <input type="email" id="auth-email" placeholder="Email" autocomplete="email">
-            </div>
-            <div class="auth-form-group">
-                <span class="icon">🔒</span>
-                <input type="password" id="auth-password" placeholder="Password" autocomplete="current-password">
-                <span class="password-toggle" id="password-toggle">👁️</span>
-            </div>
-            <div class="auth-form-group" id="confirm-password-group" style="display: none;">
-                <span class="icon">🔑</span>
-                <input type="password" id="auth-confirm-password" placeholder="Confirm Password" autocomplete="new-password">
-            </div>
-
-            <div class="login-actions">
-                <button class="btn-primary" id="auth-action-btn">Login</button>
-            </div>
-
-            <button id="google-signin-btn" class="btn-secondary" style="width:100%; margin-top: 10px;">
-                Sign in with Google
-            </button>
-
-            <div class="auth-footer">
-                <p id="auth-toggle-text">
-                    No account? <span class="auth-toggle-link" id="toggle-to-signup">Sign up now</span>.
-                </p>
-                <a href="#" class="forgot-password-link" id="forgot-password-link">Forgot Password?</a>
-            </div>
-        </div>
+    <div class="auth-form-group">
+     <span class="icon">
+      🔒
+     </span>
+     <input autocomplete="current-password" id="auth-password" placeholder="Password" type="password"/>
+     <span class="password-toggle" id="password-toggle">
+      👁️
+     </span>
     </div>
-    <div class="app-layout" id="main-app" style="display: none;">
-        <div class="main-content">
-            <div class="container">
-                <header>
-                    <h1 id="appTitle">Amway Prospect Tracker💎</h1>
-                    <div class="controls">
-                        <button class="btn-secondary" id="lang-toggle" type="button">中文</button>
-                        <button class="btn-success" id="add-prospect-btn">➕ Add New Prospect</button>
-                    </div>
-                </header>
-                <div class="tabs">
-                    <button class="tab-button active" data-tab="dashboard" id="tabDashboard">Dashboard</button>
-                    <button class="tab-button" data-tab="calendar" id="tabCalendar">Calendar</button>
-                    <button class="tab-button" data-tab="all-prospects" id="tabAllProspects">All Prospects</button>
-                    <button class="tab-button" data-tab="analytics" id="tabAnalytics">Analytics</button>
-                    <button class="tab-button" data-tab="settings" id="tabSettings">Settings</button>
-                    <button class="tab-button" data-tab="guide" id="tabGuide">Guide</button>
-                </div>
-                <div id="dashboard" class="tab-content active">
-                    <div class="dashboard-header">
-                        <h2 id="upcomingAppointmentsTitle">Upcoming Appointments 📅</h2>
-                        <div class="controls">
-                            <button id="copy-stp-btn" class="btn-secondary">Copy STP List</button>
-                            <button id="copy-gms-btn" class="btn-secondary">Copy GMS List</button>
-                        </div>
-                    </div>
-                    <div id="appointments-grid" class="reminders-grid"></div>
-                    <h2 id="followUpTitle" style="margin-top: 30px;">Follow-up Needed 📞</h2> 
-                    <div id="follow-ups-grid" class="reminders-grid"></div>
-                </div>
-                <div id="calendar" class="tab-content">
-                    <div class="calendar-header">
-                        <button id="prev-month">&lt;</button> <h2 id="current-month-year"></h2> <button id="next-month">&gt;</button>
-                    </div>
-                    <div id="calendar-legend" class="planner-legend">
-                        <span class="legend-item"><span class="appointment-dot dot-stp"></span><span id="legend-stp"></span></span>
-                        <span class="legend-item"><span class="appointment-dot dot-gms"></span><span id="legend-gms"></span></span>
-                    </div>
-                    <div id="calendar-grid-header" class="calendar-grid"></div>
-                    <div id="calendar-grid-body" class="calendar-grid"></div>
-                </div>
-                <div id="all-prospects" class="tab-content">
-                    <h2 id="allProspectsTitle">All Prospects</h2>
-                    <div class="toggle-switch" id="prospect-view-toggle"></div>
-                    <div class="filter-controls">
-                        <input type="search" id="search-input" class="search-bar">
-                        <select id="status-filter"></select>
-                        <select id="sort-by"></select>
-                    </div>
-                    <div id="prospect-list" class="prospect-list"></div>
-                    <div id="pagination-controls" class="pagination"></div>
-                </div>
-                <div id="analytics" class="tab-content">
-                    <h2 id="analyticsTitle">Monthly Analytics</h2>
-                    <div class="toggle-switch" id="analytics-view-toggle"></div>
-                    <div id="downline-analytics-controls" class="form-group" style="display: none;">
-                        <label for="downline-filter" id="downline-filter-label">Filter by Downline:</label>
-                        <select id="downline-filter"></select>
-                    </div>
-                    <div class="form-group"> <label for="analytics-month" id="analyticsMonthLabel">Select Month:</label> <input type="text" id="analytics-month"> </div>
-                    <div id="analytics-summary" class="analytics-grid"></div>
-                    <hr>
-                    <h3 id="analytics-trend-title" style="text-align: center; color: var(--primary-color);">6-Month Performance Trend</h3>
-                    <div id="trend-chart-container" style="position: relative; height:40vh; width:100%; margin-top: 20px;">
-                        <canvas id="analyticsTrendChart"></canvas>
-                    </div>
-                </div>
-                <div id="settings" class="tab-content">
-                    <h2 id="settingsTitle">Data & Settings</h2> 
-                    
-                    <div class="settings-card" style="border-left-color: var(--warning-color);">
-                         <h3>Account</h3>
-                         <p><strong>Logged in as:</strong> <span id="user-email"></span></p>
-                         <div class="controls">
-                             <button id="logout-btn" class="btn-secondary">Logout</button>
-                         </div>
-                    </div>
-
-                    <div class="settings-card" style="border-left-color: var(--accent-color); margin-top: 20px;">
-                        <h3 id="recurringAvailabilityTitle">Set Recurring Weekly Availability</h3>
-                        <p id="recurringAvailabilityDesc">Set your fixed weekly schedule here. These slots will be automatically applied to future dates.</p>
-                        <div id="recurring-availability-form"></div>
-                        <button id="save-recurring-btn" class="btn-primary" style="margin-top: 15px;">Save Recurring Slots</button>
-                    </div>
-                    
-                    <div class="settings-card" style="border-left-color: var(--primary-color); margin-top: 20px;">
-                        <h3 id="backupSyncTitle">Backup & Sync</h3>
-                        <p id="backupSyncDesc">Export all your data (prospects and availability) to a single file. You can Save this file as a backup or import it on another device to sync your data.</p>
-                        <div class="controls">
-                            <button id="exportData" class="btn-primary">Export Data</button>
-                            <label class="btn-secondary btn-file-input">
-                                <span id="importDataLabel">Import Data</span> <input type="file" id="importData" accept=".json" style="display: none;">
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="settings-card" style="border-left-color: var(--info-color); margin-top: 20px;">
-                        <h3>Data Status</h3>
-                        <p><strong>Last Synced/Imported:</strong> <span id="last-sync-time">Never</span></p>
-                        <p><strong>Total Prospects:</strong> <span id="total-prospects">0</span></p>
-                    </div>
-
-                    <div class="settings-card" style="border-left-color: var(--danger-color); margin-top: 20px;">
-                         <h3 id="dangerZoneTitle">Danger Zone</h3>
-                         <p id="dangerZoneDesc">this action will permanently delete all your prospect and availability data.</p>
-                         <button id="clearData" class="btn-danger">Clear All Data</button>
-                    </div>
-                </div>
-                 <div id="guide" class="tab-content">
-                    <h2 id="guide-main-title">Amway Prospect tracker - User Guide</h2>
-                    <hr>
-                    <h3 id="guide-getting-started-title">1. Getting Started: How to Use This File</h3>
-                    <p id="guide-getting-started-p1">Welcome! This tracker is a standalone, single-file application. You don't need to install any special software to use it.</p>
-                    <p><strong><span id="guide-getting-started-p2">To begin:</span></strong></p>
-                    <ul>
-                        <li id="guide-getting-started-li1"><b>Save the File:</b> Save the .html file to a convenient location on your computer, like your Desktop or a dedicated folder.</li>
-                        <li id="guide-getting-started-li2">Open the File:</b> To launch the application, simply double-click the file. It will open in your default web browser (Google Chrome, Firefox, or Microsoft Edge are recommended).</li>
-                        <li id="guide-getting-started-li3">Important Note on Data Storage:</b> Your data (all prospects, availability, etc.) is saved directly in your web browser's local storage. This means:<ul><li><b>It's Private:</b> Your data stays on your computer and is not sent over the internet.</li><li><b>It's Browser-Specific:</b> Data saved while using Chrome will not be visible if you open the file in Firefox, and vice-versa. Always use the same browser for consistency.</li><li><b>It's Device-Specific:</b> The data will not automatically sync to another computer or your phone. Please use the 'Backup & Sync' feature for this.</li></ul></li>
-                    </ul>
-
-                    <h3 id="guide-interface-title">2. The Main Interface 🗺️</h3>
-                    <p id="guide-interface-p1">The application is designed to be responsive and looks great on desktop, tablet, or phone.</p>
-                    <ul>
-                        <li id="guide-interface-li1"><b>Main Content Area:</b> This is where you'll interact with your data through different tabs.</li>
-                        <li id="guide-interface-li2"><b>Sidebar (Desktop View):</b> On larger screens, this panel automatically shows your upcoming available time slots for quick scheduling.</li>
-                        <li id="guide-interface-li3">Floating Button (Mobile/Tablet View):</b> On smaller screens, the sidebar is replaced by a floating calendar button (📅) in the bottom-right corner. Tapping this opens a pop-up with your available slots.</li>
-                    </ul>
-                    
-                    <h3 id="guide-dashboard-title">3. Managing Your Day: The Dashboard & Calendar</h3>
-                    <p id="guide-dashboard-p1"><b>The Dashboard Tab</b><br>This is your home screen, giving you a quick overview of what's important:</p>
-                    <ul>
-                        <li id="guide-dashboard-li1"><b>Upcoming Appointments 📅:</b> Shows all your future STP and GMS appointments, sorted by the soonest first.</li>
-                        <li id="guide-dashboard-li2"><b>One-Click Copy Buttons:</b> Next to the title, you will find 'Copy STP List' and 'Copy GMS List'. Clicking these will copy a pre-formatted summary of your upcoming appointments for that category, ready to paste into WhatsApp or other messaging apps to update your upline.</li>
-                        <li id="guide-dashboard-li3"><b>Follow-up Needed 📞:</b> Lists all prospects currently in the 'Keep In Touch' (KIT) stage.</li>
-                    </ul>
-
-                    <h3 id="guide-calendar-title">The Calendar Tab & Availability Planner</h3>
-                    <p id="guide-calendar-p1">This is your command center for time management.</p>
-                    <div class="planner-legend" style="justify-content: flex-start; margin-left: 20px;">
-                        <span class="legend-item"><span class="appointment-dot dot-stp"></span><span id="legend-stp-guide"></span></span>
-                        <span class="legend-item"><span class="appointment-dot dot-gms"></span><span id="legend-gms-guide"></span></span>
-                    </div>
-                    <p id="guide-calendar-p2"><b>Daily Availability Planner:</b> Click on any day in the calendar to open the planner. In this pop-up, you can:</p>
-                    <ul>
-                        <li id="guide-calendar-li1"><b>View Confirmed Appointments:</b> See a list of who you're meeting that day.</li>
-                        <li id="guide-calendar-li2"><b>Set Your Free Time:</b> Click on the 30-minute time slots to mark them as available.</li>
-                        <li id="guide-calendar-li3"><b>Save:</b> Click "Save Availability". The times you marked will now appear in the sidebar or the floating button's pop-up.</li>
-                    </ul>
-
-                    <h3 id="guide-prospects-title">4. Managing Your Prospects: The All Prospects Tab</h3>
-                    <p><strong><span id="guide-prospects-p1">Adding and Editing a Prospect:</span></strong></p>
-                    <ul>
-                        <li id="guide-prospects-li1">Click the ➕ Add New Prospect button in the header.</li>
-                        <li id="guide-prospects-li2">In the form, you can specify if the prospect belongs to "Myself" or "My Downline". If you select a downline, you can choose an existing one from a list or type a new name.</li>
-                        <li id="guide-prospects-li3">Fill in all details and click Save. The elegant date and time picker makes scheduling intuitive.</li>
-                    </ul>
-                    <p><strong><span id="guide-prospects-p2">Filtering and Sorting:</span></strong></p>
-                    <ul>
-                        <li id="guide-prospects-li4"><b>View Toggles:</b> At the top, you can filter between "My Prospects", "Downline's", or "All".</li>
-                        <li id="guide-prospects-li5"><b>Search, Filter, and Sort:</b> Use the search bar to find someone by name, phone, or tag. Use the Status Filter dropdown to narrow the list by their current status (e.g., show only 'Joined' prospects). You can also sort the results by date, name, or status.</li>
-                    </ul>
-                    <p><strong><span id="guide-prospects-p3">Pagination:</span></strong> To keep the list clean and fast, prospects are shown on pages. Use the navigation controls at the bottom to move between pages.</p>
-
-                    <h3 id="guide-analytics-title">5. Tracking Your Progress: The Analytics Tab 📊</h3>
-                    <p id="guide-analytics-p1">This tab helps you measure your activity and your team's progress with visual data.</p>
-                    <ul>
-                        <li id="guide-analytics-li1"><b>View Toggles:</li>
-                    </ul>
-                    <p><strong><span id="guide-analytics-p2">Filters:</span></strong></p>
-                    <ul>
-                        <li id="guide-analytics-li2">Use the clean, grid-style Month Picker to select the month you want to review.</li>
-                        <li id="guide-analytics-li3">When in 'Downline Support' view, you can use the Filter by Downline dropdown to see statistics for a specific downline or all of them combined.</li>
-                    </ul>
-                    <p><strong><span id="guide-analytics-p3">6-Month Performance Trend Chart:</span></strong> This interactive line chart visualizes your performance over the last six months for your four key metrics. Hover over any point to see details, and click the legend at the top to toggle lines on or off.</p>
-                    
-                    <h3 id="guide-settings-title">6. Settings: Data Management & Syncing ⚙️</h3>
-                    <p id="guide-settings-p1">This is where you manage your application data.</p>
-                    <ul>
-                        <li id="guide-settings-li1"><b>Data Status:</b> See at a glance when your data was last synced and the total number of prospects you have.</li>
-                    </ul>
-                    <p><strong><span id="guide-settings-p2">Backup & Sync:</span></strong> This is the most important feature for keeping your data safe and synchronized across devices.</p>
-                    <p><strong><span id="guide-settings-p3">Danger Zone:</span></strong></p>
-                    <ul>
-                        <li id="guide-settings-li2"><b>Clear All Data:</b> Use with caution! This will permanently delete all prospect records and availability data. This action cannot be undone.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-        <div class="sidebar">
-            <h3 id="sidebar-title">Upcoming Available Slots</h3>
-            <div id="available-slots-list"></div>
-        </div>
+    <div class="auth-form-group" id="confirm-password-group" style="display: none;">
+     <span class="icon">
+      🔑
+     </span>
+     <input autocomplete="new-password" id="auth-confirm-password" placeholder="Confirm Password" type="password"/>
     </div>
-    
-    <div id="prospect-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header"> <h2 id="modal-title">Add New Prospect</h2> <span class="close-button" id="close-modal">&times;</span> </div>
-            <form id="prospect-form">
-                <input type="hidden" id="prospect-id">
-                 <div class="form-group">
-                    <label id="owner-type-label">This prospect belongs to:</label>
-                    <select id="owner-type">
-                        <option value="user" id="owner-user-option">Myself</option>
-                        <option value="downline" id="owner-downline-option">My Downline</option>
-                    </select>
-                </div>
-                <div class="form-group" id="downline-name-group" style="display: none;">
-                    <label for="downline-name" id="downline-name-label">Downline's Name:</label>
-                    <input type="text" id="downline-name" list="downline-names-list">
-                    <datalist id="downline-names-list"></datalist>
-                </div>
-                <div class="form-group"> <label for="name" id="labelName">Name:</label> <input type="text" id="name" required> </div>
-                <div class="form-group"> <label for="phone" id="labelPhone">Phone:</label> <input type="text" id="phone"> </div>
-                <div class="form-group"> <label for="age" id="labelAge">Age:</label> <input type="number" id="age"> </div>
-                <div class="form-group"> <label for="occupation" id="labelOccupation">Occupation:</label> <input type="text" id="occupation"> </div>
-                <div class="form-group"> <label for="tags" id="labelTags">Tags (comma-separated):</label> <input type="text" id="tags"> </div>
-                <div class="form-group">
-                    <label for="stp-datetime" id="labelStpTime">STP Appointment Time:</label>
-                    <input type="text" id="stp-datetime" required>
-                    <div id="stp-available-slots" class="available-slots-picker"></div>
-                </div>
-                <div class="form-group"> <label for="notes" id="labelNotes">Notes:</label> <textarea id="notes" rows="3"></textarea> </div>
-                <button type="submit" class="btn-success" id="save-prospect-btn">Save</button>
-            </form>
-        </div>
+    <div class="login-actions">
+     <button class="btn-primary" id="auth-action-btn">
+      Login
+     </button>
     </div>
-    <div id="action-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header"> <h2 id="action-modal-title">Update Prospect Status</h2> <span class="close-button" id="action-close-modal">&times;</span> </div>
-            <form id="action-form">
-                <input type="hidden" id="action-prospect-id"> <input type="hidden" id="action-type">
-                <div class="form-group" id="gms-schedule-group" style="display:none;">
-                    <label for="gms-datetime" id="labelGmsTime">GMS Appointment Time:</label>
-                    <input type="text" id="gms-datetime">
-                    <div id="gms-available-slots" class="available-slots-picker"></div>
-                </div>
-                <div class="form-group"> <label for="action-notes" id="labelActionNotes">Follow-up Notes (Optional):</label> <textarea id="action-notes" rows="4"></textarea> </div>
-                <button type="submit" class="btn-success" id="confirm-action-btn">Confirm</button>
-            </form>
-        </div>
+    <button class="btn-secondary" id="google-signin-btn" style="width:100%; margin-top: 10px;">
+     Sign in with Google
+    </button>
+    <div class="auth-footer">
+     <p id="auth-toggle-text">
+      No account?
+      <span class="auth-toggle-link" id="toggle-to-signup">
+       Sign up now
+      </span>
+      .
+     </p>
+     <a class="forgot-password-link" href="#" id="forgot-password-link">
+      Forgot Password?
+     </a>
     </div>
-    <div id="planner-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header"> <h2 id="planner-title">Daily Availability Planner</h2> <span class="close-button" id="close-planner-modal">&times;</span> </div>
-            <div class="planner-container">
-                <div class="planner-appointments">
-                    <h3 id="planner-appointments-title">Confirmed Appointments</h3>
-                    <ul id="planner-appointments-list"></ul>
-                </div>
-                <div class="planner-timeline">
-                    <h3 id="planner-timeline-title">Set Your Availability</h3>
-                    <div class="planner-legend">
-                        <span class="legend-item"><span class="legend-color available"></span><span id="legend-available">Available</span></span>
-                        <span class="legend-item"><span class="legend-color booked"></span><span id="legend-booked"></span>Booked</span>
-                        <span class="legend-item"><span class="legend-color busy"></span><span id="legend-busy"></span>Busy</span>
-                    </div>
-                    <div id="planner-timeline-slots"></div>
-                </div>
-            </div>
-            <div class="planner-footer">
-                <button class="btn-primary" id="save-availability-btn">Save Availability</button>
-            </div>
-        </div>
+   </div>
+  </div>
+  <div class="app-layout" id="main-app" style="display: none;">
+   <div class="main-content">
+    <div class="container">
+     <header>
+      <h1 id="appTitle">
+       Amway Prospect Tracker💎
+      </h1>
+      <div class="controls">
+       <button class="btn-secondary" id="lang-toggle" type="button">
+        中文
+       </button>
+       <button class="btn-success" id="add-prospect-btn">
+        ➕ Add New Prospect
+       </button>
+      </div>
+     </header>
+     <div class="tabs">
+      <button class="tab-button active" data-tab="dashboard" id="tabDashboard">
+       Dashboard
+      </button>
+      <button class="tab-button" data-tab="calendar" id="tabCalendar">
+       Calendar
+      </button>
+      <button class="tab-button" data-tab="all-prospects" id="tabAllProspects">
+       All Prospects
+      </button>
+      <button class="tab-button" data-tab="analytics" id="tabAnalytics">
+       Analytics
+      </button>
+      <button class="tab-button" data-tab="settings" id="tabSettings">
+       Settings
+      </button>
+      <button class="tab-button" data-tab="guide" id="tabGuide">
+       Guide
+      </button>
+     </div>
+     <div class="tab-content active" id="dashboard">
+      <div class="dashboard-header">
+       <h2 id="upcomingAppointmentsTitle">
+        Upcoming Appointments 📅
+       </h2>
+       <div class="controls">
+        <button class="btn-secondary" id="copy-stp-btn">
+         Copy STP List
+        </button>
+        <button class="btn-secondary" id="copy-gms-btn">
+         Copy GMS List
+        </button>
+       </div>
+      </div>
+      <div class="reminders-grid" id="appointments-grid">
+      </div>
+      <h2 id="followUpTitle" style="margin-top: 30px;">
+       Follow-up Needed 📞
+      </h2>
+      <div class="reminders-grid" id="follow-ups-grid">
+      </div>
+     </div>
+     <div class="tab-content" id="calendar">
+      <div class="calendar-header">
+       <button id="prev-month">
+        &lt;
+       </button>
+       <h2 id="current-month-year">
+       </h2>
+       <button id="next-month">
+        &gt;
+       </button>
+      </div>
+      <div class="planner-legend" id="calendar-legend">
+       <span class="legend-item">
+        <span class="appointment-dot dot-stp">
+        </span>
+        <span id="legend-stp">
+        </span>
+       </span>
+       <span class="legend-item">
+        <span class="appointment-dot dot-gms">
+        </span>
+        <span id="legend-gms">
+        </span>
+       </span>
+      </div>
+      <div class="calendar-grid" id="calendar-grid-header">
+      </div>
+      <div class="calendar-grid" id="calendar-grid-body">
+      </div>
+     </div>
+     <div class="tab-content" id="all-prospects">
+      <h2 id="allProspectsTitle">
+       All Prospects
+      </h2>
+      <div class="toggle-switch" id="prospect-view-toggle">
+      </div>
+      <div class="filter-controls">
+       <input class="search-bar" id="search-input" type="search"/>
+       <select id="status-filter">
+       </select>
+       <select id="sort-by">
+       </select>
+      </div>
+      <div class="prospect-list" id="prospect-list">
+      </div>
+      <div class="pagination" id="pagination-controls">
+      </div>
+     </div>
+     <div class="tab-content" id="analytics">
+      <h2 id="analyticsTitle">
+       Monthly Analytics
+      </h2>
+      <div class="toggle-switch" id="analytics-view-toggle">
+      </div>
+      <div class="form-group" id="downline-analytics-controls" style="display: none;">
+       <label for="downline-filter" id="downline-filter-label">
+        Filter by Downline:
+       </label>
+       <select id="downline-filter">
+       </select>
+      </div>
+      <div class="form-group">
+       <label for="analytics-month" id="analyticsMonthLabel">
+        Select Month:
+       </label>
+       <input id="analytics-month" type="text"/>
+      </div>
+      <div class="analytics-grid" id="analytics-summary">
+      </div>
+      <hr/>
+      <h3 id="analytics-trend-title" style="text-align: center; color: var(--primary-color);">
+       6-Month Performance Trend
+      </h3>
+      <div id="trend-chart-container" style="position: relative; height:40vh; width:100%; margin-top: 20px;">
+       <canvas id="analyticsTrendChart">
+       </canvas>
+      </div>
+     </div>
+     <div class="tab-content" id="settings">
+      <h2 id="settingsTitle">
+       Data &amp; Settings
+      </h2>
+      <div class="settings-card" style="border-left-color: var(--warning-color);">
+       <h3>
+        Account
+       </h3>
+       <p>
+        <strong>
+         Logged in as:
+        </strong>
+        <span id="user-email">
+        </span>
+       </p>
+       <div class="controls">
+        <button class="btn-secondary" id="logout-btn">
+         Logout
+        </button>
+       </div>
+      </div>
+      <div class="settings-card" style="border-left-color: var(--accent-color); margin-top: 20px;">
+       <h3 id="recurringAvailabilityTitle">
+        Set Recurring Weekly Availability
+       </h3>
+       <p id="recurringAvailabilityDesc">
+        Set your fixed weekly schedule here. These slots will be automatically applied to future dates.
+       </p>
+       <div id="recurring-availability-form">
+       </div>
+       <button class="btn-primary" id="save-recurring-btn" style="margin-top: 15px;">
+        Save Recurring Slots
+       </button>
+      </div>
+      <div class="settings-card" style="border-left-color: var(--primary-color); margin-top: 20px;">
+       <h3 id="backupSyncTitle">
+        Backup &amp; Sync
+       </h3>
+       <p id="backupSyncDesc">
+        Export all your data (prospects and availability) to a single file. You can Save this file as a backup or import it on another device to sync your data.
+       </p>
+       <div class="controls">
+        <button class="btn-primary" id="exportData">
+         Export Data
+        </button>
+        <label class="btn-secondary btn-file-input">
+         <span id="importDataLabel">
+          Import Data
+         </span>
+         <input accept=".json" id="importData" style="display: none;" type="file"/>
+        </label>
+       </div>
+      </div>
+      <div class="settings-card" style="border-left-color: var(--info-color); margin-top: 20px;">
+       <h3>
+        Data Status
+       </h3>
+       <p>
+        <strong>
+         Last Synced/Imported:
+        </strong>
+        <span id="last-sync-time">
+         Never
+        </span>
+       </p>
+       <p>
+        <strong>
+         Total Prospects:
+        </strong>
+        <span id="total-prospects">
+         0
+        </span>
+       </p>
+      </div>
+      <div class="settings-card" style="border-left-color: var(--danger-color); margin-top: 20px;">
+       <h3 id="dangerZoneTitle">
+        Danger Zone
+       </h3>
+       <p id="dangerZoneDesc">
+        this action will permanently delete all your prospect and availability data.
+       </p>
+       <button class="btn-danger" id="clearData">
+        Clear All Data
+       </button>
+      </div>
+     </div>
+     <div class="tab-content" id="guide">
+      <h2 id="guide-main-title">
+       Amway Prospect tracker - User Guide
+      </h2>
+      <hr/>
+      <h3 id="guide-getting-started-title">
+       1. Getting Started: How to Use This File
+      </h3>
+      <p id="guide-getting-started-p1">
+       Welcome! This tracker is a standalone, single-file application. You don't need to install any special software to use it.
+      </p>
+      <p>
+       <strong>
+        <span id="guide-getting-started-p2">
+         To begin:
+        </span>
+       </strong>
+      </p>
+      <ul>
+       <li id="guide-getting-started-li1">
+        <b>
+         Save the File:
+        </b>
+        Save the .html file to a convenient location on your computer, like your Desktop or a dedicated folder.
+       </li>
+       <li id="guide-getting-started-li2">
+        Open the File:
+        To launch the application, simply double-click the file. It will open in your default web browser (Google Chrome, Firefox, or Microsoft Edge are recommended).
+       </li>
+       <li id="guide-getting-started-li3">
+        Important Note on Data Storage:
+        Your data (all prospects, availability, etc.) is saved directly in your web browser's local storage. This means:
+        <ul>
+         <li>
+          <b>
+           It's Private:
+          </b>
+          Your data stays on your computer and is not sent over the internet.
+         </li>
+         <li>
+          <b>
+           It's Browser-Specific:
+          </b>
+          Data saved while using Chrome will not be visible if you open the file in Firefox, and vice-versa. Always use the same browser for consistency.
+         </li>
+         <li>
+          <b>
+           It's Device-Specific:
+          </b>
+          The data will not automatically sync to another computer or your phone. Please use the 'Backup &amp; Sync' feature for this.
+         </li>
+        </ul>
+       </li>
+      </ul>
+      <h3 id="guide-interface-title">
+       2. The Main Interface 🗺️
+      </h3>
+      <p id="guide-interface-p1">
+       The application is designed to be responsive and looks great on desktop, tablet, or phone.
+      </p>
+      <ul>
+       <li id="guide-interface-li1">
+        <b>
+         Main Content Area:
+        </b>
+        This is where you'll interact with your data through different tabs.
+       </li>
+       <li id="guide-interface-li2">
+        <b>
+         Sidebar (Desktop View):
+        </b>
+        On larger screens, this panel automatically shows your upcoming available time slots for quick scheduling.
+       </li>
+       <li id="guide-interface-li3">
+        Floating Button (Mobile/Tablet View):
+        On smaller screens, the sidebar is replaced by a floating calendar button (📅) in the bottom-right corner. Tapping this opens a pop-up with your available slots.
+       </li>
+      </ul>
+      <h3 id="guide-dashboard-title">
+       3. Managing Your Day: The Dashboard &amp; Calendar
+      </h3>
+      <p id="guide-dashboard-p1">
+       <b>
+        The Dashboard Tab
+       </b>
+       <br/>
+       This is your home screen, giving you a quick overview of what's important:
+      </p>
+      <ul>
+       <li id="guide-dashboard-li1">
+        <b>
+         Upcoming Appointments 📅:
+        </b>
+        Shows all your future STP and GMS appointments, sorted by the soonest first.
+       </li>
+       <li id="guide-dashboard-li2">
+        <b>
+         One-Click Copy Buttons:
+        </b>
+        Next to the title, you will find 'Copy STP List' and 'Copy GMS List'. Clicking these will copy a pre-formatted summary of your upcoming appointments for that category, ready to paste into WhatsApp or other messaging apps to update your upline.
+       </li>
+       <li id="guide-dashboard-li3">
+        <b>
+         Follow-up Needed 📞:
+        </b>
+        Lists all prospects currently in the 'Keep In Touch' (KIT) stage.
+       </li>
+      </ul>
+      <h3 id="guide-calendar-title">
+       The Calendar Tab &amp; Availability Planner
+      </h3>
+      <p id="guide-calendar-p1">
+       This is your command center for time management.
+      </p>
+      <div class="planner-legend" style="justify-content: flex-start; margin-left: 20px;">
+       <span class="legend-item">
+        <span class="appointment-dot dot-stp">
+        </span>
+        <span id="legend-stp-guide">
+        </span>
+       </span>
+       <span class="legend-item">
+        <span class="appointment-dot dot-gms">
+        </span>
+        <span id="legend-gms-guide">
+        </span>
+       </span>
+      </div>
+      <p id="guide-calendar-p2">
+       <b>
+        Daily Availability Planner:
+       </b>
+       Click on any day in the calendar to open the planner. In this pop-up, you can:
+      </p>
+      <ul>
+       <li id="guide-calendar-li1">
+        <b>
+         View Confirmed Appointments:
+        </b>
+        See a list of who you're meeting that day.
+       </li>
+       <li id="guide-calendar-li2">
+        <b>
+         Set Your Free Time:
+        </b>
+        Click on the 30-minute time slots to mark them as available.
+       </li>
+       <li id="guide-calendar-li3">
+        <b>
+         Save:
+        </b>
+        Click "Save Availability". The times you marked will now appear in the sidebar or the floating button's pop-up.
+       </li>
+      </ul>
+      <h3 id="guide-prospects-title">
+       4. Managing Your Prospects: The All Prospects Tab
+      </h3>
+      <p>
+       <strong>
+        <span id="guide-prospects-p1">
+         Adding and Editing a Prospect:
+        </span>
+       </strong>
+      </p>
+      <ul>
+       <li id="guide-prospects-li1">
+        Click the ➕ Add New Prospect button in the header.
+       </li>
+       <li id="guide-prospects-li2">
+        In the form, you can specify if the prospect belongs to "Myself" or "My Downline". If you select a downline, you can choose an existing one from a list or type a new name.
+       </li>
+       <li id="guide-prospects-li3">
+        Fill in all details and click Save. The elegant date and time picker makes scheduling intuitive.
+       </li>
+      </ul>
+      <p>
+       <strong>
+        <span id="guide-prospects-p2">
+         Filtering and Sorting:
+        </span>
+       </strong>
+      </p>
+      <ul>
+       <li id="guide-prospects-li4">
+        <b>
+         View Toggles:
+        </b>
+        At the top, you can filter between "My Prospects", "Downline's", or "All".
+       </li>
+       <li id="guide-prospects-li5">
+        <b>
+         Search, Filter, and Sort:
+        </b>
+        Use the search bar to find someone by name, phone, or tag. Use the Status Filter dropdown to narrow the list by their current status (e.g., show only 'Joined' prospects). You can also sort the results by date, name, or status.
+       </li>
+      </ul>
+      <p>
+       <strong>
+        <span id="guide-prospects-p3">
+         Pagination:
+        </span>
+       </strong>
+       To keep the list clean and fast, prospects are shown on pages. Use the navigation controls at the bottom to move between pages.
+      </p>
+      <h3 id="guide-analytics-title">
+       5. Tracking Your Progress: The Analytics Tab 📊
+      </h3>
+      <p id="guide-analytics-p1">
+       This tab helps you measure your activity and your team's progress with visual data.
+      </p>
+      <ul>
+       <li id="guide-analytics-li1">
+        <b>
+         View Toggles:
+        </b>
+       </li>
+      </ul>
+      <p>
+       <strong>
+        <span id="guide-analytics-p2">
+         Filters:
+        </span>
+       </strong>
+      </p>
+      <ul>
+       <li id="guide-analytics-li2">
+        Use the clean, grid-style Month Picker to select the month you want to review.
+       </li>
+       <li id="guide-analytics-li3">
+        When in 'Downline Support' view, you can use the Filter by Downline dropdown to see statistics for a specific downline or all of them combined.
+       </li>
+      </ul>
+      <p>
+       <strong>
+        <span id="guide-analytics-p3">
+         6-Month Performance Trend Chart:
+        </span>
+       </strong>
+       This interactive line chart visualizes your performance over the last six months for your four key metrics. Hover over any point to see details, and click the legend at the top to toggle lines on or off.
+      </p>
+      <h3 id="guide-settings-title">
+       6. Settings: Data Management &amp; Syncing ⚙️
+      </h3>
+      <p id="guide-settings-p1">
+       This is where you manage your application data.
+      </p>
+      <ul>
+       <li id="guide-settings-li1">
+        <b>
+         Data Status:
+        </b>
+        See at a glance when your data was last synced and the total number of prospects you have.
+       </li>
+      </ul>
+      <p>
+       <strong>
+        <span id="guide-settings-p2">
+         Backup &amp; Sync:
+        </span>
+       </strong>
+       This is the most important feature for keeping your data safe and synchronized across devices.
+      </p>
+      <p>
+       <strong>
+        <span id="guide-settings-p3">
+         Danger Zone:
+        </span>
+       </strong>
+      </p>
+      <ul>
+       <li id="guide-settings-li2">
+        <b>
+         Clear All Data:
+        </b>
+        Use with caution! This will permanently delete all prospect records and availability data. This action cannot be undone.
+       </li>
+      </ul>
+     </div>
     </div>
-    <div id="availability-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header"> 
-                <h2 id="availability-modal-title">Upcoming Available Slots</h2> 
-                <span class="close-button" id="close-availability-modal">&times;</span> 
-            </div>
-            <div id="modal-slots-list"></div>
-        </div>
+   </div>
+   <div class="sidebar">
+    <h3 id="sidebar-title">
+     Upcoming Available Slots
+    </h3>
+    <div id="available-slots-list">
     </div>
-
-    <div id="forgot-password-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="forgot-password-title">Reset Password</h2>
-                <span class="close-button" id="close-forgot-password-modal">&times;</span>
-            </div>
-            <p id="forgot-password-instructions">Enter your email address and we will send you instructions to reset your password.</p>
-            <div class="form-group">
-                <label for="reset-email" id="label-reset-email">Email</label>
-                <input type="email" id="reset-email" placeholder="your.email@example.com">
-            </div>
-            <button class="btn-primary" id="send-reset-btn" style="width: 100%;">Send Reset Instructions</button>
-        </div>
+   </div>
+  </div>
+  <div class="modal" id="prospect-modal">
+   <div class="modal-content">
+    <div class="modal-header">
+     <h2 id="modal-title">
+      Add New Prospect
+     </h2>
+     <span class="close-button" id="close-modal">
+      &times;
+     </span>
     </div>
-    <button id="show-availability-fab">📅</button>
-
-    <script src="libs/supabase.js"></script>
-    <script defer src="libs/flatpickr.js"></script>
-    <script defer src="libs/chart.js"></script>
-
-    
-<script>
-function runWhenSupabaseReady(fn){
+    <form id="prospect-form">
+     <input id="prospect-id" type="hidden"/>
+     <div class="form-group">
+      <label id="owner-type-label">
+       This prospect belongs to:
+      </label>
+      <select id="owner-type">
+       <option id="owner-user-option" value="user">
+        Myself
+       </option>
+       <option id="owner-downline-option" value="downline">
+        My Downline
+       </option>
+      </select>
+     </div>
+     <div class="form-group" id="downline-name-group" style="display: none;">
+      <label for="downline-name" id="downline-name-label">
+       Downline's Name:
+      </label>
+      <input id="downline-name" list="downline-names-list" type="text"/>
+      <datalist id="downline-names-list">
+      </datalist>
+     </div>
+     <div class="form-group">
+      <label for="name" id="labelName">
+       Name:
+      </label>
+      <input id="name" required="" type="text"/>
+     </div>
+     <div class="form-group">
+      <label for="phone" id="labelPhone">
+       Phone:
+      </label>
+      <input id="phone" type="text"/>
+     </div>
+     <div class="form-group">
+      <label for="age" id="labelAge">
+       Age:
+      </label>
+      <input id="age" type="number"/>
+     </div>
+     <div class="form-group">
+      <label for="occupation" id="labelOccupation">
+       Occupation:
+      </label>
+      <input id="occupation" type="text"/>
+     </div>
+     <div class="form-group">
+      <label for="tags" id="labelTags">
+       Tags (comma-separated):
+      </label>
+      <input id="tags" type="text"/>
+     </div>
+     <div class="form-group">
+      <label for="stp-datetime" id="labelStpTime">
+       STP Appointment Time:
+      </label>
+      <input id="stp-datetime" required="" type="text"/>
+      <div class="available-slots-picker" id="stp-available-slots">
+      </div>
+     </div>
+     <div class="form-group">
+      <label for="notes" id="labelNotes">
+       Notes:
+      </label>
+      <textarea id="notes" rows="3"></textarea>
+     </div>
+     <button class="btn-success" id="save-prospect-btn" type="submit">
+      Save
+     </button>
+    </form>
+   </div>
+  </div>
+  <div class="modal" id="action-modal">
+   <div class="modal-content">
+    <div class="modal-header">
+     <h2 id="action-modal-title">
+      Update Prospect Status
+     </h2>
+     <span class="close-button" id="action-close-modal">
+      &times;
+     </span>
+    </div>
+    <form id="action-form">
+     <input id="action-prospect-id" type="hidden"/>
+     <input id="action-type" type="hidden"/>
+     <div class="form-group" id="gms-schedule-group" style="display:none;">
+      <label for="gms-datetime" id="labelGmsTime">
+       GMS Appointment Time:
+      </label>
+      <input id="gms-datetime" type="text"/>
+      <div class="available-slots-picker" id="gms-available-slots">
+      </div>
+     </div>
+     <div class="form-group">
+      <label for="action-notes" id="labelActionNotes">
+       Follow-up Notes (Optional):
+      </label>
+      <textarea id="action-notes" rows="4"></textarea>
+     </div>
+     <button class="btn-success" id="confirm-action-btn" type="submit">
+      Confirm
+     </button>
+    </form>
+   </div>
+  </div>
+  <div class="modal" id="planner-modal">
+   <div class="modal-content">
+    <div class="modal-header">
+     <h2 id="planner-title">
+      Daily Availability Planner
+     </h2>
+     <span class="close-button" id="close-planner-modal">
+      &times;
+     </span>
+    </div>
+    <div class="planner-container">
+     <div class="planner-appointments">
+      <h3 id="planner-appointments-title">
+       Confirmed Appointments
+      </h3>
+      <ul id="planner-appointments-list">
+      </ul>
+     </div>
+     <div class="planner-timeline">
+      <h3 id="planner-timeline-title">
+       Set Your Availability
+      </h3>
+      <div class="planner-legend">
+       <span class="legend-item">
+        <span class="legend-color available">
+        </span>
+        <span id="legend-available">
+         Available
+        </span>
+       </span>
+       <span class="legend-item">
+        <span class="legend-color booked">
+        </span>
+        <span id="legend-booked">
+        </span>
+        Booked
+       </span>
+       <span class="legend-item">
+        <span class="legend-color busy">
+        </span>
+        <span id="legend-busy">
+        </span>
+        Busy
+       </span>
+      </div>
+      <div id="planner-timeline-slots">
+      </div>
+     </div>
+    </div>
+    <div class="planner-footer">
+     <button class="btn-primary" id="save-availability-btn">
+      Save Availability
+     </button>
+    </div>
+   </div>
+  </div>
+  <div class="modal" id="availability-modal">
+   <div class="modal-content">
+    <div class="modal-header">
+     <h2 id="availability-modal-title">
+      Upcoming Available Slots
+     </h2>
+     <span class="close-button" id="close-availability-modal">
+      &times;
+     </span>
+    </div>
+    <div id="modal-slots-list">
+    </div>
+   </div>
+  </div>
+  <div class="modal" id="forgot-password-modal">
+   <div class="modal-content">
+    <div class="modal-header">
+     <h2 id="forgot-password-title">
+      Reset Password
+     </h2>
+     <span class="close-button" id="close-forgot-password-modal">
+      &times;
+     </span>
+    </div>
+    <p id="forgot-password-instructions">
+     Enter your email address and we will send you instructions to reset your password.
+    </p>
+    <div class="form-group">
+     <label for="reset-email" id="label-reset-email">
+      Email
+     </label>
+     <input id="reset-email" placeholder="your.email@example.com" type="email"/>
+    </div>
+    <button class="btn-primary" id="send-reset-btn" style="width: 100%;">
+     Send Reset Instructions
+    </button>
+   </div>
+  </div>
+  <button id="show-availability-fab">
+   📅
+  </button>
+  <script src="libs/supabase.js">
+  </script>
+  <script defer="" src="libs/flatpickr.js">
+  </script>
+  <script defer="" src="libs/chart.js">
+  </script>
+  <script>
+   function runWhenSupabaseReady(fn){
   if (typeof supabase !== 'undefined' && supabase) { try { fn(); } catch(e) { console.error(e); } return; }
   if (typeof supabaseReady !== 'undefined' && supabaseReady && typeof supabaseReady.then === 'function') {
     supabaseReady.then(() => { try { fn(); } catch(e) { console.error(e); } });
@@ -678,9 +1132,9 @@ function runWhenSupabaseReady(fn){
     }, 25);
   }
 }
-</script>
-<script>
-    function monthSelectPlugin(pluginConfig) {
+  </script>
+  <script>
+   function monthSelectPlugin(pluginConfig) {
         const defaultConfig = {
             shorthand: false,
             dateFormat: "F Y",
@@ -864,10 +1318,9 @@ function runWhenSupabaseReady(fn){
             };
         };
     }
-    </script>
-
-    <script>
-        // --- START: NEW SUPABASE SETUP ---
+  </script>
+  <script>
+   // --- START: NEW SUPABASE SETUP ---
         const SUPABASE_URL = 'https://puaofmijvkmamyfugdzi.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1YW9mbWlqdmttYW15ZnVnZHppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTkzOTUsImV4cCI6MjA3MjYzNTM5NX0.fVuYgjxpf2pRLYpkCBIfsC5PjBQKKRYtN5hnL9jrZ8A';
 
@@ -2772,10 +3225,9 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
             const { data: { user } } = await supabaseReady.then(() => supabase.auth.getUser());
             await updateUserUI(user);
         })();
-        
-    </script>
-<script>
-    if ('serviceWorker' in navigator) {
+  </script>
+  <script>
+   if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('/sw.js')
                 .then(registration => {
@@ -2786,9 +3238,9 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
                 });
         });
     }
-</script>
-<script>
-runWhenSupabaseReady(async () => {
+  </script>
+  <script>
+   runWhenSupabaseReady(async () => {
   // Set your VAPID public key (from web-push generate-vapid-keys)
   const VAPID_PUBLIC_KEY = 'REPLACE_WITH_YOUR_VAPID_PUBLIC_KEY';
 
@@ -2835,6 +3287,6 @@ runWhenSupabaseReady(async () => {
 
   document.getElementById('enable-push-btn')?.addEventListener('click', enablePush);
 });
-</script>
-</body>
+  </script>
+ </body>
 </html>
