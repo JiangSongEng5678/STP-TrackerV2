@@ -304,7 +304,48 @@
     </style>
 </head>
 <body>
-    <div id="toast-container"></div>
+
+<!-- Language bootstrap: single delegated handler + DOM attribute as source of truth -->
+<script>
+(function () {
+  const fallback = 'zh-CN';
+  const saved = localStorage.getItem('preferredLanguage');
+  const initial = (saved === 'en' || saved === 'zh-CN') ? saved : fallback;
+
+  // Use DOM attribute as canonical value to avoid stale globals
+  document.documentElement.setAttribute('data-lang', initial);
+  window.currentLang = initial;
+
+  if (!window.__langBound) {
+    document.addEventListener('click', function (e) {
+      const btn = e.target.closest('#lang-toggle');
+      if (!btn) return;
+      const now = document.documentElement.getAttribute('data-lang') || fallback;
+      const next = (now === 'zh-CN') ? 'en' : 'zh-CN';
+      if (typeof window.setLanguage === 'function') {
+        window.setLanguage(next);
+      } else {
+        localStorage.setItem('preferredLanguage', next);
+        document.documentElement.setAttribute('data-lang', next);
+        window.currentLang = next;
+      }
+    }, { passive: true });
+    window.__langBound = true;
+  }
+
+  // Apply initial language when setLanguage becomes available
+  (function applyWhenReady(){
+    if (typeof window.setLanguage === 'function') {
+      window.setLanguage(document.documentElement.getAttribute('data-lang') || initial);
+    } else {
+      requestAnimationFrame(applyWhenReady);
+    }
+  })();
+})();
+</script>
+
+
+<div id="toast-container"></div>
     <div id="loading-screen">
         <div class="welcome-message">
             <span id="welcome-icon">💎</span> <span id="welcome-text">欢迎钻石们!</span>
@@ -353,7 +394,7 @@
                 <header>
                     <h1 id="appTitle">Amway Prospect Tracker💎</h1>
                     <div class="controls">
-                        <button class="btn-secondary" id="lang-toggle">中文</button>
+                        <button class="btn-secondary" id="lang-toggle" type="button">中文</button>
                         <button class="btn-success" id="add-prospect-btn">➕ Add New Prospect</button>
                     </div>
                 </header>
@@ -1143,6 +1184,11 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
 
 
         function setLanguage(lang) {
+  if (lang !== 'en' && lang !== 'zh-CN') return;
+  document.documentElement.setAttribute('data-lang', lang);
+  window.currentLang = lang;
+  localStorage.setItem('preferredLanguage', lang);
+
             currentLang = lang; 
             document.documentElement.lang = lang; 
             localStorage.setItem('preferredLanguage', lang); // Save preference
@@ -1264,8 +1310,6 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
         document.getElementById('close-planner-modal').onclick = () => plannerModal.style.display = 'none';
         document.getElementById('close-availability-modal').onclick = () => availabilityModal.style.display = 'none';
         showAvailabilityFab.onclick = () => availabilityModal.style.display = 'flex';
-        document.getElementById('lang-toggle').addEventListener('click', () => setLanguage(currentLang === 'zh-CN' ? 'en' : 'zh-CN'));
-        
         window.addEventListener('click', (e) => {
             if (!e.target.closest('.card-menu-container')) {
                 document.querySelectorAll('.card-menu.open').forEach(menu => menu.classList.remove('open'));
@@ -2548,7 +2592,7 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
             });
 
             const preferredLanguage = localStorage.getItem('preferredLanguage') || 'zh-CN';
-            setLanguage(preferredLanguage);
+            if (!window._langInitDone) setLanguage(preferredLanguage);
 
             try {
                 const now = new Date();
@@ -2578,8 +2622,6 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
             document.getElementById('close-planner-modal').onclick = () => plannerModal.style.display = 'none';
             document.getElementById('close-availability-modal').onclick = () => availabilityModal.style.display = 'none';
             showAvailabilityFab.onclick = () => availabilityModal.style.display = 'flex';
-            document.getElementById('lang-toggle').addEventListener('click', () => setLanguage(currentLang === 'zh-CN' ? 'en' : 'zh-CN'));
-            
             window.addEventListener('click', (e) => {
                 if (!e.target.closest('.card-menu-container')) {
                     document.querySelectorAll('.card-menu.open').forEach(menu => menu.classList.remove('open'));
