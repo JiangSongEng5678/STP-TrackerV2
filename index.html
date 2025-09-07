@@ -305,47 +305,31 @@
 </head>
 <body>
 
-<!-- Language bootstrap: single delegated handler + DOM attribute as source of truth -->
+<!-- Early language init & live toggle binding -->
 <script>
-(function () {
-  const fallback = 'zh-CN';
-  const saved = localStorage.getItem('preferredLanguage');
-  const initial = (saved === 'en' || saved === 'zh-CN') ? saved : fallback;
-
-  // Use DOM attribute as canonical value to avoid stale globals
-  document.documentElement.setAttribute('data-lang', initial);
-  window.currentLang = initial;
-
-  if (!window.__langBound) {
-    document.addEventListener('click', function (e) {
-      const btn = e.target.closest('#lang-toggle');
-      if (!btn) return;
-      const now = document.documentElement.getAttribute('data-lang') || fallback;
-      const next = (now === 'zh-CN') ? 'en' : 'zh-CN';
-      if (typeof window.setLanguage === 'function') {
-        window.setLanguage(next);
-      } else {
-        localStorage.setItem('preferredLanguage', next);
-        document.documentElement.setAttribute('data-lang', next);
-        window.currentLang = next;
-      }
-    }, { passive: true });
-    window.__langBound = true;
-  }
-
-  // Apply initial language when setLanguage becomes available
-  (function applyWhenReady(){
-    if (typeof window.setLanguage === 'function') {
-      window.setLanguage(document.documentElement.getAttribute('data-lang') || initial);
+(function(){
+  const preferred = localStorage.getItem('preferredLanguage') || 'zh-CN';
+  window.currentLang = preferred;
+  function trySet(){
+    if (typeof setLanguage === 'function') {
+      setLanguage(preferred);
+      window._langInitDone = true;
     } else {
-      requestAnimationFrame(applyWhenReady);
+      setTimeout(trySet, 30);
     }
-  })();
+  }
+  trySet();
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('#lang-toggle');
+    if (!btn) return;
+    const next = (window.currentLang === 'zh-CN') ? 'en' : 'zh-CN';
+    if (typeof setLanguage === 'function') setLanguage(next);
+  }, { passive: true });
 })();
 </script>
 
-
-<div id="toast-container"></div>
+    <div id="toast-container"></div>
     <div id="loading-screen">
         <div class="welcome-message">
             <span id="welcome-icon">💎</span> <span id="welcome-text">欢迎钻石们!</span>
@@ -1184,11 +1168,6 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
 
 
         function setLanguage(lang) {
-  if (lang !== 'en' && lang !== 'zh-CN') return;
-  document.documentElement.setAttribute('data-lang', lang);
-  window.currentLang = lang;
-  localStorage.setItem('preferredLanguage', lang);
-
             currentLang = lang; 
             document.documentElement.lang = lang; 
             localStorage.setItem('preferredLanguage', lang); // Save preference
@@ -1310,6 +1289,8 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
         document.getElementById('close-planner-modal').onclick = () => plannerModal.style.display = 'none';
         document.getElementById('close-availability-modal').onclick = () => availabilityModal.style.display = 'none';
         showAvailabilityFab.onclick = () => availabilityModal.style.display = 'flex';
+        document.getElementById('lang-toggle').addEventListener('click', () => setLanguage(currentLang === 'zh-CN' ? 'en' : 'zh-CN'));
+        
         window.addEventListener('click', (e) => {
             if (!e.target.closest('.card-menu-container')) {
                 document.querySelectorAll('.card-menu.open').forEach(menu => menu.classList.remove('open'));
@@ -2622,6 +2603,8 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
             document.getElementById('close-planner-modal').onclick = () => plannerModal.style.display = 'none';
             document.getElementById('close-availability-modal').onclick = () => availabilityModal.style.display = 'none';
             showAvailabilityFab.onclick = () => availabilityModal.style.display = 'flex';
+            document.getElementById('lang-toggle').addEventListener('click', () => setLanguage(currentLang === 'zh-CN' ? 'en' : 'zh-CN'));
+            
             window.addEventListener('click', (e) => {
                 if (!e.target.closest('.card-menu-container')) {
                     document.querySelectorAll('.card-menu.open').forEach(menu => menu.classList.remove('open'));
@@ -2808,31 +2791,54 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
   <h3>Notifications</h3>
   <p>Enable push notifications to receive reminders on this device.</p>
   <button id="enable-push-btn" class="btn-primary" type="button">Enable Push Notifications</button>
-  <button id="test-push-btn" class="btn-secondary" type="button" style="margin-left:.5rem;">Test Push (+1 min)</button>
 </section>
 <script>
-runWhenSupabaseReady(() => {
-  async function createTestReminder() {
+runWhenSupabaseReady(async () => {
+  // Set your VAPID public key (from web-push generate-vapid-keys)
+  const VAPID_PUBLIC_KEY = 'REPLACE_WITH_YOUR_VAPID_PUBLIC_KEY';
+
+  const toUint8 = (base64) => {
+    const padding = '='.repeat((4 - (base64.length % 4)) % 4);
+    const b64 = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw = atob(b64); const out = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; ++i) out[i] = raw.charCodeAt(i);
+    return out;
+  };
+
+  async function saveSubscription(sub) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { alert('Please sign in first.'); return; }
+    const payload = {
+      user_id: user.id,
+      endpoint: sub.endpoint,
+      auth: sub.keys.auth,
+      p256dh: sub.keys.p256dh
+    };
+    await supabase.from('push_subscriptions').upsert(payload, { onConflict: 'endpoint' });
+  }
+
+  async function enablePush() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { alert('Please sign in first.'); return; }
-      const fireAt = new Date(Date.now() + 60 * 1000).toISOString();
-      const { error } = await supabase.from('reminders').insert({
-        user_id: user.id,
-        title: 'Test Reminder',
-        body: 'This is a test notification from STP Tracker.',
-        fire_at: fireAt,
-        url: '/'
+      if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+        alert('Push is not supported on this browser.');
+        return;
+      }
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') { alert('Permission denied.'); return; }
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: toUint8(VAPID_PUBLIC_KEY)
       });
-      if (error) throw error;
-      alert('✅ Test reminder created for +1 minute.');
+      await saveSubscription(sub);
+      console.log('Push enabled');
     } catch (e) {
-      console.error('createTestReminder error', e);
-      alert('Failed to create test reminder. See console for details.');
+      console.error('Enable push failed', e);
+      alert('Failed to enable push. See console for details.');
     }
   }
 
-  document.getElementById('test-push-btn')?.addEventListener('click', createTestReminder);
+  document.getElementById('enable-push-btn')?.addEventListener('click', enablePush);
 });
 </script>
 </body>
