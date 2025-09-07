@@ -1,0 +1,6 @@
+[functions]
+  node_bundler = "esbuild"
+
+[[scheduled.functions]]
+  name = "send-notifications"
+  cron = "*/15 * * * *"   # every 15 minutes

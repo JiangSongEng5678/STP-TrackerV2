@@ -2804,5 +2804,36 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
         });
     }
 </script>
+<section id="push-notifications" style="margin:1rem 0;">
+  <h3>Notifications</h3>
+  <p>Enable push notifications to receive reminders on this device.</p>
+  <button id="enable-push-btn" class="btn-primary" type="button">Enable Push Notifications</button>
+  <button id="test-push-btn" class="btn-secondary" type="button" style="margin-left:.5rem;">Test Push (+1 min)</button>
+</section>
+<script>
+runWhenSupabaseReady(() => {
+  async function createTestReminder() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { alert('Please sign in first.'); return; }
+      const fireAt = new Date(Date.now() + 60 * 1000).toISOString();
+      const { error } = await supabase.from('reminders').insert({
+        user_id: user.id,
+        title: 'Test Reminder',
+        body: 'This is a test notification from STP Tracker.',
+        fire_at: fireAt,
+        url: '/'
+      });
+      if (error) throw error;
+      alert('✅ Test reminder created for +1 minute.');
+    } catch (e) {
+      console.error('createTestReminder error', e);
+      alert('Failed to create test reminder. See console for details.');
+    }
+  }
+
+  document.getElementById('test-push-btn')?.addEventListener('click', createTestReminder);
+});
+</script>
 </body>
 </html>

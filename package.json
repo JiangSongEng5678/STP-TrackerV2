@@ -1,0 +1,9 @@
+{
+  "name": "stp-trackerv2-push",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.3",
+    "web-push": "^3.6.6"
+  }
+}
