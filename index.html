@@ -1622,6 +1622,7 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
 
         function setLanguage(lang) {
             currentLang = lang; 
+            window.currentLang = lang; 
             document.documentElement.lang = lang; 
             localStorage.setItem('preferredLanguage', lang); // Save preference
             const t = translations[lang];
@@ -1742,8 +1743,7 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
         document.getElementById('close-planner-modal').onclick = () => plannerModal.style.display = 'none';
         document.getElementById('close-availability-modal').onclick = () => availabilityModal.style.display = 'none';
         showAvailabilityFab.onclick = () => availabilityModal.style.display = 'flex';
-        document.getElementById('lang-toggle').addEventListener('click', () => setLanguage(currentLang === 'zh-CN' ? 'en' : 'zh-CN'));
-        
+                
         window.addEventListener('click', (e) => {
             if (!e.target.closest('.card-menu-container')) {
                 document.querySelectorAll('.card-menu.open').forEach(menu => menu.classList.remove('open'));
@@ -3056,8 +3056,7 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
             document.getElementById('close-planner-modal').onclick = () => plannerModal.style.display = 'none';
             document.getElementById('close-availability-modal').onclick = () => availabilityModal.style.display = 'none';
             showAvailabilityFab.onclick = () => availabilityModal.style.display = 'flex';
-            document.getElementById('lang-toggle').addEventListener('click', () => setLanguage(currentLang === 'zh-CN' ? 'en' : 'zh-CN'));
-            
+                        
             window.addEventListener('click', (e) => {
                 if (!e.target.closest('.card-menu-container')) {
                     document.querySelectorAll('.card-menu.open').forEach(menu => menu.classList.remove('open'));
@@ -3216,12 +3215,11 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
 
         supabaseReady.then(() => {
   supabase.auth.onAuthStateChange((event, session) => {
-            const user = session ? session.user : null;
-            updateUserUI(user);
+    const user = session ? session.user : null;
+    updateUserUI(user);
+  });
 });
-        });
-
-        (async () => {
+(async () => {
             const { data: { user } } = await supabaseReady.then(() => supabase.auth.getUser());
             await updateUserUI(user);
         })();
@@ -3288,5 +3286,90 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
   document.getElementById('enable-push-btn')?.addEventListener('click', enablePush);
 });
   </script>
- </body>
+ 
+<script>
+// Language manager (English <-> 简体中文) with delegated events so it keeps working after re-renders
+(function() {
+  const LANG_KEY = "appLanguage";
+  const langNames = { "en": "English", "zh-CN": "简体中文" };
+  let currentLang = localStorage.getItem(LANG_KEY) || "en";
+
+  function getToggle() {
+    return document.getElementById("language-btn")
+        || document.querySelector('[data-role="language-toggle"]')
+        || document.querySelector(".language-toggle")
+        || null;
+  }
+
+  function applyLanguage(lang) {
+    currentLang = lang;
+    try { localStorage.setItem(LANG_KEY, lang); } catch(e) {}
+
+    // Update toggle label if present (node may be replaced by app code, so resolve fresh each time)
+    const toggle = getToggle();
+    if (toggle) {
+      if (toggle.tagName === 'SELECT') toggle.value = lang;
+      else toggle.textContent = langNames[lang] || lang;
+    }
+
+    // Update all translatable nodes
+    document.querySelectorAll("[data-i18n]").forEach(el => {
+      try {
+        const dict = JSON.parse(el.getAttribute("data-i18n"));
+        if (dict && dict[lang] != null) el.textContent = dict[lang];
+      } catch (_) {}
+    });
+
+    document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+      try {
+        const dict = JSON.parse(el.getAttribute("data-i18n-placeholder"));
+        if (dict && dict[lang] != null) el.setAttribute("placeholder", dict[lang]);
+      } catch (_) {}
+    });
+
+    document.querySelectorAll("[data-i18n-title]").forEach(el => {
+      try {
+        const dict = JSON.parse(el.getAttribute("data-i18n-title"));
+        if (dict && dict[lang] != null) el.setAttribute("title", dict[lang]);
+      } catch (_) {}
+    });
+
+    // Re-init DataTables if available (optional)
+    if (window.jQuery && window.jQuery.fn && window.jQuery.fn.dataTable) {
+      const $ = window.jQuery;
+      $(".dataTable").each(function() {
+        if ($.fn.dataTable.isDataTable(this)) $(this).DataTable().destroy();
+        $(this).DataTable({
+          language: { url: (lang === "en" ? "" : "//cdn.datatables.net/plug-ins/1.13.6/i18n/zh.json") }
+        });
+      });
+    }
+  }
+
+  // Delegated listeners survive DOM replacements
+  document.addEventListener("click", (e) => {
+    const t = e.target.closest("#language-btn, [data-role='language-toggle'], .language-toggle");
+    if (!t) return;
+    if (t.tagName !== 'SELECT') {
+      const next = (currentLang === "en") ? "zh-CN" : "en";
+      applyLanguage(next);
+    }
+  });
+
+  document.addEventListener("change", (e) => {
+    const t = e.target.closest("#language-btn, [data-role='language-toggle'], .language-toggle");
+    if (!t) return;
+    if (t.tagName === 'SELECT') {
+      applyLanguage(t.value === "zh-CN" ? "zh-CN" : "en");
+    }
+  });
+
+  // Apply saved/default on load
+  document.addEventListener("DOMContentLoaded", () => {
+    applyLanguage(currentLang);
+  });
+})();
+</script>
+
+</body>
 </html>
