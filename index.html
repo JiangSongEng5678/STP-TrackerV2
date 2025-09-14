@@ -3000,5 +3000,93 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
 })();
 </script>
 
+
+<script type="module">
+// Robust one-time push setup after Supabase is ready
+(() => {
+  const VAPID_PUBLIC_KEY = 'BIDMrzJt8JhFBipdyHSTNhdBVxetRNxuWw0KzxxUAn9e__jUNaxZg-luXSQ5kpjDtqMgvF1KmrZGNRNgRL7leLw';
+  const LS = { prompted: 'pushPrompted_v2', subscribed: 'pushSubscribed_v2' };
+
+  const toUint8 = (b64) => {
+    const pad = '='.repeat((4 - (b64.length % 4)) % 4);
+    const base64 = (b64 + pad).replace(/-/g, '+').replace(/_/g, '/');
+    const raw = atob(base64); const out = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+  };
+
+  const supported = () => ('Notification' in window) && ('serviceWorker' in navigator) && ('PushManager' in window);
+
+  async function saveSubscription(client, userId, sub) {
+    try {
+      const json = sub.toJSON();
+      const payload = { user_id: userId, endpoint: sub.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth };
+      const { error } = await client.from('push_subscriptions').upsert(payload, { onConflict: 'endpoint' });
+      if (!error) localStorage.setItem(LS.subscribed, '1');
+      else console.error('saveSubscription error', error);
+    } catch (e) { console.error('saveSubscription fatal', e); }
+  }
+
+  async function subscribeNow(client, user) {
+    if (!supported()) return;
+    const reg = await navigator.serviceWorker.ready;
+    const existing = await reg.pushManager.getSubscription();
+    if (existing) { await saveSubscription(client, user.id, existing); return; }
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: toUint8(VAPID_PUBLIC_KEY) });
+    await saveSubscription(client, user.id, sub);
+  }
+
+  let pushSetupDone = false;
+  async function ensurePushSetupOnce() {
+    if (pushSetupDone) return;
+
+    // Wait for Supabase client
+    const client = (typeof supabaseReady !== 'undefined' && supabaseReady && typeof supabaseReady.then === 'function')
+      ? await supabaseReady
+      : (typeof supabase !== 'undefined' ? supabase : null);
+
+    if (!client || !client.auth) { console.warn('Supabase client not ready, skipping push setup'); return; }
+
+    const { data, error } = await client.auth.getUser();
+    const user = data && data.user;
+    if (error) { console.warn('getUser error', error); return; }
+    if (!user) { return; }
+
+    if (Notification.permission === 'granted') {
+      if (!localStorage.getItem(LS.subscribed)) await subscribeNow(client, user);
+      pushSetupDone = true;
+      return;
+    }
+
+    if (Notification.permission === 'default' && !localStorage.getItem(LS.prompted)) {
+      localStorage.setItem(LS.prompted, '1');
+      const perm = await Notification.requestPermission();
+      if (perm === 'granted') await subscribeNow(client, user);
+      pushSetupDone = true;
+    }
+  }
+
+  // Hook into auth state only after client is ready
+  (async () => {
+    const client = (typeof supabaseReady !== 'undefined' && supabaseReady && typeof supabaseReady.then === 'function')
+      ? await supabaseReady
+      : (typeof supabase !== 'undefined' ? supabase : null);
+
+    if (client && client.auth && typeof client.auth.onAuthStateChange === 'function') {
+      client.auth.onAuthStateChange((_e, session) => {
+        if (session && session.user) ensurePushSetupOnce();
+      });
+    }
+
+    // also attempt once on load (for already logged-in session)
+    ensurePushSetupOnce();
+  })();
+
+  // Optional manual re-enable button
+  const manualBtn = document.getElementById('enable-push-btn');
+  if (manualBtn) manualBtn.addEventListener('click', () => ensurePushSetupOnce());
+})();
+</script>
+
 </body>
 </html>

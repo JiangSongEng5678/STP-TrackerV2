@@ -1,13 +1,11 @@
-// netlify/functions/send-notifications.js (quiet + verbose logs)
+// netlify/functions/send-notifications.js
 const webpush = require('web-push');
 const { createClient } = require('@supabase/supabase-js');
 
-// Suppress only the noisy Node 'punycode' deprecation warning coming from dependencies
+// Suppress only the noisy Node 'punycode' deprecation warning
 process.on('warning', (w) => {
-  if (w && w.name === 'DeprecationWarning' && /punycode/i.test(String(w.message))) {
-    return; // ignore this specific warning
-  }
-  console.warn(w.stack || w.message || w); // keep other warnings
+  if (w && w.name === 'DeprecationWarning' && /punycode/i.test(String(w.message))) return;
+  console.warn(w.stack || w.message || w);
 });
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -35,6 +33,8 @@ exports.handler = async function() {
     }
     if (!reminders || reminders.length === 0) {
       console.log('No due reminders at', now);
+      // Also do periodic cleanup when idle
+      await cleanupOld();
       return { statusCode: 200, body: 'ok' };
     }
 
@@ -65,14 +65,18 @@ exports.handler = async function() {
 
       await Promise.all(targets.map(async s => {
         try {
-          await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, payload);
+          await webpush.sendNotification(
+            { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+            payload
+          );
           sentCount++;
         } catch (err) {
           const code = err && (err.statusCode || err.status);
-          if (code === 404 || code === 410) toDelete.push(s.endpoint);
+          if (code === 404 || code === 410) toDelete.push(s.endpoint); // expired
           console.error('push error', code, err && err.body ? err.body : String(err));
         }
       }));
+
       toMark.push(r.id);
     }));
 
@@ -86,9 +90,22 @@ exports.handler = async function() {
     }
 
     console.log(`Done. Reminders: ${reminders.length}, Targets: ${targetCount}, Sent: ${sentCount}, Duration: ${Date.now()-start}ms`);
+    await cleanupOld(); // space saver
+
     return { statusCode: 200, body: 'ok' };
   } catch (e) {
     console.error('Unhandled error in function:', e);
     return { statusCode: 500, body: 'error' };
   }
 };
+
+// delete sent reminders older than 30 days
+async function cleanupOld(days = 30) {
+  const cutoff = new Date(Date.now() - days*24*60*60*1000).toISOString();
+  const { error } = await supabase
+    .from('reminders')
+    .delete()
+    .eq('sent', true)
+    .lte('fire_at', cutoff);
+  if (error) console.error('Cleanup error:', error);
+}
