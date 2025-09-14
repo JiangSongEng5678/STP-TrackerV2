@@ -38,6 +38,7 @@ exports.handler = async function() {
       return { statusCode: 200, body: 'ok' };
     }
 
+    // === IMPORTANT: fan-out to ALL devices for each user ===
     const users = [...new Set(reminders.map(r => r.user_id))];
     const { data: subs, error: subErr } = await supabase
       .from('push_subscriptions')
@@ -49,19 +50,27 @@ exports.handler = async function() {
       return { statusCode: 500, body: 'DB error' };
     }
 
+    // Group subs per user and dedupe by endpoint to be safe
     const subsByUser = new Map();
     (subs || []).forEach(s => {
-      if (!subsByUser.has(s.user_id)) subsByUser.set(s.user_id, []);
-      subsByUser.get(s.user_id).push(s);
+      const list = subsByUser.get(s.user_id) || [];
+      if (!list.find(x => x.endpoint === s.endpoint)) list.push(s);
+      subsByUser.set(s.user_id, list);
     });
 
-    const toDelete = []; const toMark = [];
-    let sentCount = 0; let targetCount = 0;
+    const toDelete = [];     // expired endpoints to remove
+    const toMarkSent = [];   // reminder ids that had >=1 successful delivery
+    let sentCount = 0; 
+    let targetCount = 0;
 
+    // Send to every device for each user's reminder
     await Promise.all(reminders.map(async r => {
       const targets = subsByUser.get(r.user_id) || [];
       targetCount += targets.length;
+      if (targets.length === 0) return;  // Don't mark as sent if user has no devices
+
       const payload = JSON.stringify({ title: r.title, body: r.body, url: r.url || '/' });
+      let okForThisReminder = 0;
 
       await Promise.all(targets.map(async s => {
         try {
@@ -70,6 +79,7 @@ exports.handler = async function() {
             payload
           );
           sentCount++;
+          okForThisReminder++;
         } catch (err) {
           const code = err && (err.statusCode || err.status);
           if (code === 404 || code === 410) toDelete.push(s.endpoint); // expired
@@ -77,16 +87,18 @@ exports.handler = async function() {
         }
       }));
 
-      toMark.push(r.id);
+      if (okForThisReminder > 0) {
+        toMarkSent.push(r.id);
+      }
     }));
 
     if (toDelete.length) {
       await supabase.from('push_subscriptions').delete().in('endpoint', toDelete);
       console.log('Deleted expired subscriptions:', toDelete.length);
     }
-    if (toMark.length) {
-      await supabase.from('reminders').update({ sent: true }).in('id', toMark);
-      console.log('Marked reminders sent:', toMark.length);
+    if (toMarkSent.length) {
+      await supabase.from('reminders').update({ sent: true }).in('id', toMarkSent);
+      console.log('Marked reminders sent:', toMarkSent.length);
     }
 
     console.log(`Done. Reminders: ${reminders.length}, Targets: ${targetCount}, Sent: ${sentCount}, Duration: ${Date.now()-start}ms`);

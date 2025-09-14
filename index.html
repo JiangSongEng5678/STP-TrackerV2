@@ -3243,5 +3243,61 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
 })();
 </script>
 
+<script>
+// === Multi-device push subscription registration ===
+runWhenSupabaseReady(async () => {
+  const VAPID_PUBLIC_KEY = 'BIDMrzJt8JhFBipdyHSTNhdBVxetRNxuWw0KzxxUAn9e__jUNaxZg-luXSQ5kpjDtqMgvF1KmrZGNRNgRL7leLw';
+
+  const toUint8 = (base64) => {
+    const padding = '='.repeat((4 - (base64.length % 4)) % 4);
+    const b64 = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw = atob(b64); const out = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; ++i) out[i] = raw.charCodeAt(i);
+    return out;
+  };
+
+  async function saveSubscription(sub) {
+    const { data } = await supabase.auth.getUser();
+    const user = data && data.user;
+    if (!user || !sub) return;
+    const payload = {
+      user_id: user.id,
+      endpoint: sub.endpoint,
+      auth: sub.keys && sub.keys.auth,
+      p256dh: sub.keys && sub.keys.p256dh
+    };
+    // Upsert by endpoint so one device doesn't affect others
+    await supabase.from('push_subscriptions').upsert(payload, { onConflict: 'endpoint' });
+  }
+
+  async function ensurePushRegistered() {
+    try {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+      const reg = await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        if (Notification.permission !== 'granted') return; // respect user's choice; your existing UI can request permission
+        sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: toUint8(VAPID_PUBLIC_KEY) });
+      }
+      await saveSubscription(sub);
+    } catch (e) {
+      console.warn('ensurePushRegistered failed', e);
+    }
+  }
+
+  // Register/refresh subscription whenever auth state changes (per device)
+  if (supabase?.auth?.onAuthStateChange) {
+    supabase.auth.onAuthStateChange(async (_evt, session) => {
+      if (session && session.user) await ensurePushRegistered();
+    });
+  }
+
+  // Also run once for existing sessions
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) await ensurePushRegistered();
+  } catch (e) {}
+});
+</script>
 </body>
 </html>
