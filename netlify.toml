@@ -3,4 +3,4 @@
 
 [[scheduled.functions]]
   name = "send-notifications"
-  cron = "*/10 * * * *"   # every 15 minutes
+  cron = "*/10 * * * *"   # every 10 minutes

@@ -2164,22 +2164,63 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
             });
         }
 
-        document.getElementById('clearData').addEventListener('click', async () => { 
-            if (confirm(translations[currentLang].confirmClearData)) { 
-                const { data: { user } } = await supabaseReady.then(() => supabase.auth.getUser());
-                if(!user) return;
-                const { error: prospectError } = await supabase.from('prospects').delete().eq('user_id', user.id);
-                const { error: availabilityError } = await supabase.from('availability').delete().eq('user_id', user.id);
-                const { error: settingsError } = await supabase.from('user_settings').delete().eq('user_id', user.id);
+        document.getElementById('clearData')?.addEventListener('click', async () => {
+  const getLang = () => (typeof currentLang !== 'undefined' ? currentLang : 'en');
+  const t = (key, fallback) => {
+    try {
+      if (typeof translations !== 'undefined' && translations[getLang()] && translations[getLang()][key]) {
+        return translations[getLang()][key];
+      }
+    } catch (_) {}
+    return fallback;
+  };
 
-                if (prospectError || availabilityError || settingsError) {
-                    console.error('Error clearing data:', prospectError, availabilityError, settingsError);
-                } else {
-                    alert(translations[currentLang].dataCleared);
-                }
-                await renderAll(); // Refresh UI
-            } 
-        });
+  if (!confirm(t('confirmClearData', getLang() === 'zh-CN' ? '确认要清除所有数据吗？' : 'Are you sure you want to clear all your data?'))) return;
+  const typed = prompt(getLang() === 'zh-CN' ? '为确认，请输入：DELETE（英文大写）' : 'To confirm, type: DELETE');
+  if (typed !== 'DELETE') return;
+
+  const btn = document.getElementById('clearData');
+  const originalLabel = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = getLang() === 'zh-CN' ? '正在清除…' : 'Clearing…'; }
+
+  try {
+    const authGetter = (typeof supabaseReady !== 'undefined') ? (async () => { await supabaseReady; return supabase.auth.getUser(); }) : (() => supabase.auth.getUser());
+    const { data: { user } } = await authGetter();
+    if (!user) { alert(getLang() === 'zh-CN' ? '请先登录。' : 'Please log in first.'); return; }
+
+    try {
+      if (typeof prospects !== 'undefined') prospects = [];
+      if (typeof availability !== 'undefined') availability = {};
+      if (typeof recurringAvailability !== 'undefined') recurringAvailability = {};
+      if (typeof renderAll === 'function') { renderAll().catch(() => {}); }
+    } catch (_) {}
+
+    const tasks = [
+      supabase.from('reminders').delete().eq('user_id', user.id),
+      supabase.from('push_subscriptions').delete().eq('user_id', user.id),
+      supabase.from('prospects').delete().eq('user_id', user.id),
+      supabase.from('availability').delete().eq('user_id', user.id),
+      supabase.from('user_settings').delete().eq('user_id', user.id),
+    ];
+
+    const results = await Promise.allSettled(tasks);
+    const failures = results.filter(r => r.status === 'rejected' || (r.value && r.value.error));
+
+    if (failures.length) {
+      console.error('Some items failed to delete:', failures);
+      alert(getLang() === 'zh-CN' ? '部分数据未能删除，请查看控制台。' : 'Some items could not be deleted. See console for details.');
+    } else {
+      alert(t('dataCleared', getLang() === 'zh-CN' ? '已清除你的所有数据。' : 'All your data has been cleared.'));
+    }
+
+    if (typeof renderAll === 'function') await renderAll();
+  } catch (err) {
+    console.error('Clear data failed:', err);
+    alert(getLang() === 'zh-CN' ? '清除失败，请稍后重试。' : 'Failed to clear data. Please try again.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = originalLabel; }
+  }
+});
         
         document.getElementById('exportData').addEventListener('click', () => {
             if (prospects.length === 0 && Object.keys(availability).length === 0) return alert('No data to export.');
