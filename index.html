@@ -279,7 +279,7 @@
             body { padding: 15px; }
             .app-layout { flex-direction: column; } 
             .sidebar { display: none; }
-            #show-availability-fab { display: flex; }
+            body.logged-in #show-availability-fab { display: flex; }
         }
 
         /* Phone Responsive Styles */
@@ -2910,7 +2910,11 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
   };
 
   async function saveSubscription(sub) {
-    const { data: { user } } = await supabase.auth.getUser();
+    const client = (typeof supabaseReady !== 'undefined' && supabaseReady && typeof supabaseReady.then==='function')
+      ? await supabaseReady : (typeof supabase !== 'undefined' ? supabase : null);
+    if (!client || !client.auth) { alert('Please sign in first.'); return; }
+    const { data } = await client.auth.getUser();
+    const user = data && data.user;
     if (!user) { alert('Please sign in first.'); return; }
     const payload = {
       user_id: user.id,
@@ -3115,6 +3119,86 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
   // Optional manual re-enable button
   const manualBtn = document.getElementById('enable-push-btn');
   if (manualBtn) manualBtn.addEventListener('click', () => ensurePushSetupOnce());
+})();
+</script>
+
+
+<script>
+// === Auth-aware UI glue: welcome once per session, FAB only after login ===
+(function () {
+  function setAuthBodyClass(isLoggedIn) {
+    document.body.classList.toggle('logged-in', !!isLoggedIn);
+    document.body.classList.toggle('logged-out', !isLoggedIn);
+  }
+
+  // Hide welcome immediately if already seen and default to logged-out
+  (function hideWelcomeEarly() {
+    if (sessionStorage.getItem('hasSeenWelcome') === 'true') {
+      const loading = document.getElementById('loading-screen');
+      if (loading) loading.classList.add('hidden');
+    }
+    setAuthBodyClass(false);
+  })();
+
+  runWhenSupabaseReady(async () => {
+    try {
+      // ✅ Always use the resolved client, not the bare global
+      const client = (typeof supabaseReady !== 'undefined' && supabaseReady && typeof supabaseReady.then === 'function')
+        ? await supabaseReady
+        : (typeof supabase !== 'undefined' ? supabase : null);
+
+      if (!client || !client.auth) return;
+
+      const { data } = await client.auth.getUser();
+      const user = data?.user || null;
+      setAuthBodyClass(!!user);
+
+      if (typeof client.auth.onAuthStateChange === 'function') {
+        client.auth.onAuthStateChange((_e, session) => {
+          const u = session?.user || null;
+          setAuthBodyClass(!!u);
+
+          const loading = document.getElementById('loading-screen');
+          if (!u) {
+            sessionStorage.removeItem('hasSeenWelcome');
+            if (loading) loading.classList.add('hidden');
+          } else {
+            const hasSeen = sessionStorage.getItem('hasSeenWelcome') === 'true';
+            if (loading) {
+              if (!hasSeen) {
+                setTimeout(() => {
+                  loading.classList.add('hidden');
+                  sessionStorage.setItem('hasSeenWelcome', 'true');
+                }, 1500);
+              } else {
+                loading.classList.add('hidden');
+              }
+            }
+          }
+        });
+      }
+
+      // Initial welcome hide/show
+      const loading = document.getElementById('loading-screen');
+      if (user) {
+        const hasSeen = sessionStorage.getItem('hasSeenWelcome') === 'true';
+        if (loading) {
+          if (!hasSeen) {
+            setTimeout(() => {
+              loading.classList.add('hidden');
+              sessionStorage.setItem('hasSeenWelcome', 'true');
+            }, 1500);
+          } else {
+            loading.classList.add('hidden');
+          }
+        }
+      } else if (loading) {
+        loading.classList.add('hidden');
+      }
+    } catch (e) {
+      console.warn('Auth UI glue error', e);
+    }
+  });
 })();
 </script>
 
