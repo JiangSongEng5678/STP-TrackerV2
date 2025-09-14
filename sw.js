@@ -1,5 +1,5 @@
 /* Service Worker v3.1 — safe caching */
-const VERSION = 'v3.3-2025-09-14';
+const VERSION = 'v3.4-2025-09-14';
 const ASSET_CACHE = `assets-${VERSION}`;
 const HTML_CACHE  = `html-${VERSION}`;
 
@@ -88,3 +88,35 @@ async function staleWhileRevalidate(request, cacheName) {
   }).catch(() => null);
   return cached || networkPromise || fetch(request).catch(() => cached || new Response('Offline', {status: 503}));
 }
+
+// === Push Notifications ===
+self.addEventListener('push', (event) => {
+  try {
+    if (!event.data) return;
+    let payload = {};
+    try {
+      payload = event.data.json();
+    } catch (e) {
+      payload = { title: 'Reminder', body: event.data.text() };
+    }
+
+    const title = payload.title || 'Reminder';
+    const options = {
+      body: payload.body || '',
+      icon: '/images/icon-192x192.png',
+      badge: '/images/icon-192x192.png',
+      data: { url: payload.url || '/' }
+    };
+
+    event.waitUntil(self.registration.showNotification(title, options));
+  } catch (e) {
+    console.error('push handler error', e);
+  }
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const target = (event.notification && event.notification.data && event.notification.data.url) || '/';
+  event.waitUntil(clients.openWindow(target));
+});
+
