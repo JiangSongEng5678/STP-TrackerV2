@@ -836,6 +836,22 @@
   </button>
   <script src="libs/supabase.js">
   </script>
+
+  <script>
+  // Wait for flatpickr to be available before using it
+  function whenFlatpickrReady(fn) {
+    if (window.flatpickr) {
+      try { fn(window.flatpickr); } catch (e) { console.error(e); }
+    } else {
+      const __fpWait = setInterval(() => {
+        if (window.flatpickr) {
+          clearInterval(__fpWait);
+          try { fn(window.flatpickr); } catch (e) { console.error(e); }
+        }
+      }, 25);
+    }
+  }
+  </script>
   <script defer="" src="libs/flatpickr.js">
   </script>
   <script defer="" src="libs/chart.js">
@@ -1250,6 +1266,20 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
 
 
         function setLanguage(lang) {
+    // Ensure flatpickr is localized only after it's loaded
+    whenFlatpickrReady((fp) => {
+      try {
+        if (typeof flatpickr_zh_locale !== 'undefined') {
+          fp.l10ns.zh = fp.l10ns.zh || flatpickr_zh_locale;
+        }
+        if (lang === 'zh-CN' && fp.l10ns.zh) {
+          fp.localize(fp.l10ns.zh);
+        } else {
+          fp.localize(fp.l10ns.default || {});
+        }
+      } catch (e) { console.warn('flatpickr localization skipped:', e); }
+    });
+
             currentLang = lang; 
             window.currentLang = lang; 
             document.documentElement.lang = lang; 
