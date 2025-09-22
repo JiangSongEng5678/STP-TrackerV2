@@ -1,8 +1,11 @@
+# netlify.toml (at repo root)
+
 [functions]
+  # Be explicit so Netlify doesn’t use a UI override accidentally:
+  directory = "netlify/functions"
   node_bundler = "esbuild"
 
-# Run the serverless function on a cron schedule.
-# IMPORTANT: 'path' must point to the deployed function route.
+# Attach a cron to the public route of your function
 [[scheduled]]
-  cron = "*/10 * * * *"   # every 10 minutes
+  cron = "*/10 * * * *"         # every 10 minutes
   path = "/.netlify/functions/send-notifications"
