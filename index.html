@@ -303,7 +303,51 @@
             .prospect-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
         }
   </style>
- </head>
+ 
+<style id="all-prospects-mobile-fixes">
+/* === All Prospects: mobile layout fixes (scoped) === */
+
+/* Prevent flex/grid children from overflowing on small screens */
+#all-prospects .filter-controls,
+#all-prospects .filter-controls > * {
+  min-width: 0;
+}
+
+/* Normalize spacing to match other tabs */
+#all-prospects h2 { margin: 4px 0 12px; }
+#all-prospects .toggle-switch { margin-bottom: 10px; }
+#all-prospects .filter-controls { margin-bottom: 14px; }
+
+/* Keep menu from pushing header text */
+#all-prospects .prospect-card { position: relative; }
+#all-prospects .card-menu-container { flex-shrink: 0; }
+#all-prospects .card-header h3 { min-width: 0; }
+
+/* Ensure inputs/selects don't get cramped at tablet widths */
+@media (max-width: 768px) {
+  #all-prospects .search-bar,
+  #all-prospects #status-filter,
+  #all-prospects #sort-by {
+    flex: 1 1 auto;
+  }
+}
+
+/* Very small phones: stack filters into a single column */
+@media (max-width: 420px) {
+  #all-prospects .filter-controls {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  #all-prospects .filter-controls .search-bar,
+  #all-prospects #status-filter,
+  #all-prospects #sort-by {
+    width: 100%;
+  }
+}
+</style>
+
+</head>
  <body>
   <!-- Early language init & live toggle binding -->
   <script>
