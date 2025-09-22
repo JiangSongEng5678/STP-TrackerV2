@@ -1,5 +1,5 @@
 /* Service Worker v3.1 — safe caching */
-const VERSION = 'v3.5-2025-09-14';
+const VERSION = 'v3.6-2025-09-22';
 const ASSET_CACHE = `assets-${VERSION}`;
 const HTML_CACHE  = `html-${VERSION}`;
 
