@@ -1,6 +1,8 @@
 [functions]
   node_bundler = "esbuild"
 
-[[scheduled.functions]]
-  name = "send-notifications"
+# Run the serverless function on a cron schedule.
+# IMPORTANT: 'path' must point to the deployed function route.
+[[scheduled]]
   cron = "*/10 * * * *"   # every 10 minutes
+  path = "/.netlify/functions/send-notifications"
