@@ -1425,6 +1425,14 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
             const id = document.getElementById('prospect-id').value;
             const stpTimeValue = document.getElementById('stp-datetime').value;
             if (!stpTimeValue) { alert('Please select an STP time.'); return; }
+
+            const now = new Date();
+            const chosen = new Date(stpTimeValue);
+            if (isNaN(chosen.getTime()) || chosen <= now) {
+                alert(currentLang === 'zh-CN' ? '不能选择过去的时间。' : 'You can’t choose a past date/time.');
+                return;
+            }
+
             const stpTime = new Date(stpTimeValue).toISOString();
 
             const ownerType = document.getElementById('owner-type').value;
@@ -1775,7 +1783,10 @@ const supabaseReady = new Promise(r => (supabaseReadyResolve = r));
                 if (p.gms_time && new Date(p.gms_time) > now) upcoming.push({ p, type: 'GMS', date: new Date(p.gms_time) });
             });
 
-            const appointmentsToCopy = upcoming.filter(item => item.type === type);
+            const appointmentsToCopy = upcoming
+                .filter(item => item.type === type)
+                .sort((a, b) => a.date - b.date); // ascending by datetime
+
             if (appointmentsToCopy.length === 0) return;
 
             const dayNames = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
