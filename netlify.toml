@@ -1,11 +1,9 @@
-# netlify.toml (at repo root)
+# netlify.toml (repo root)
 
 [functions]
-  # Be explicit so Netlify doesn’t use a UI override accidentally:
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
-# Attach a cron to the public route of your function
-[[scheduled]]
-  cron = "*/10 * * * *"         # every 10 minutes
-  path = "/.netlify/functions/send-notifications"
+# Attach the schedule to the function by NAME
+[functions."send-notifications"]
+schedule = "*/10 * * * *"   # every 10 minutes (UTC)
